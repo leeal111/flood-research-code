@@ -1,0 +1,8 @@
+.vscode
+temp
+method/__pycache__
+corr_res
+valid
+deprecated/data
+
+method/stiv.py
