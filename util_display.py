@@ -2,8 +2,6 @@ import cv2
 import numpy as np
 import math
 import matplotlib.pyplot as plt
-import os
-import shutil
 
 
 def toImg(data):
@@ -76,16 +74,3 @@ def img_add_angle(img, angle, noPrintNum=0):
         ] = 255
 
     return img_c
-
-
-def fft_add_angle(img, angle):
-    #  返回傅里叶变换结果图以及有角度线的图
-
-    fft = toImg(np.log(np.abs(np.fft.fftshift(np.fft.fft2(img)))))
-
-    thresh_val = 150
-    ret, fft = cv2.threshold(
-        fft, thresh_val, 255, cv2.THRESH_BINARY
-    )  # +cv2.THRESH_OTSU
-
-    return img_add_angle(fft, angle)

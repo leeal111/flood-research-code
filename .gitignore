@@ -1,8 +1,8 @@
+__pycache__
 .vscode
-temp
-method/__pycache__
-corr_res
-valid
+data
 deprecated/data
+result
 
-method/stiv.py
+stiv.py
+valid_method.py

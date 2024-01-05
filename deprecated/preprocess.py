@@ -135,19 +135,5 @@ def getVideoLines(video_path, w, h):
         return [[x, w // 2, 750] for x in range(0, h)]
 
 
-def renameRemoteSti(prefix, path):
-    for file in os.listdir(path):
-        if not file.endswith(".jpg"):
-            continue
-        name, d = os.path.splitext(file)
-        try:
-            index = int(name[len(prefix) :])
-        except ValueError:
-            continue
-        os.rename(
-            os.path.join(path, file), os.path.join(path, f"{prefix}{index:03}" + d)
-        )
-
-
 if __name__ == "__main__":
     pass
