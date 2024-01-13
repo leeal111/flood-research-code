@@ -24,10 +24,11 @@ for dir1 in listdir(root):
 
         # 需要首先完成有效性判断
         if not exists(join(imgDir_path, valid_path)):
+            print(f"{imgDir_path} not exists valid_result")
             continue
 
         # 检查是否存在人工标注结果，存在则忽略
-        if exists(join(imgDir_path, res_path, kvs.correctRealFileName)):
+        if exists(join(imgDir_path, res_path, kvs.al_result_resName)):
             continue
         dir_list.append(imgDir_path)
 
@@ -118,11 +119,11 @@ def nextImg():
     if current_img_index == img_num:
         return
     while valid_data[current_img_index] == 0:
-        if current_img_index == img_num:
-            return
         al_ress.append(-1)
         st_ress.append(-1)
         current_img_index += 1
+        if current_img_index == img_num:
+            return
     label1.configure(image=st_tkimgs[current_img_index])
     label2.configure(image=al_tkimgs[current_img_index])
 

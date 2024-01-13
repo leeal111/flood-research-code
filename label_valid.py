@@ -5,13 +5,13 @@ import tkinter as tk
 import cv2
 from PIL import Image, ImageTk
 
+from valid_compute_imp import validScoreMethods
 from stiv_compute_routine_imp import ifRight2LeftForLoc
-from valid_method import *
 from key_value import kvs
 
 root = kvs.root
 res_path = kvs.validResDir
-methods = validMethods
+scoreMethods = validScoreMethods
 
 # 依赖的前置操作
 st_path = kvs.sumlistPicDir
@@ -116,7 +116,7 @@ def nextImg():
     label1.configure(image=st_tkimgs[current_img_index])
     label2.configure(image=al_tkimgs[current_img_index])
 
-    for i, met in enumerate(methods):
+    for i, met in enumerate(scoreMethods):
         scores[i].set(str(met(imgDir_path, current_img_index)))
 
 
@@ -162,7 +162,7 @@ label2.pack(side=tk.LEFT)
 
 scores = []
 text_labels = []
-for met in methods:
+for met in scoreMethods:
     score = tk.StringVar()
     score.set(f"{met.__name__}")
     text_label = tk.Label(window, textvariable=score)

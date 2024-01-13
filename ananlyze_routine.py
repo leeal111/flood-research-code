@@ -7,6 +7,6 @@ TestMode = 0
 
 makedirs(res_Path, exist_ok=True)
 if TestMode == 0:
-    valid_method_result_eval(res_Path, root)
+    pass
 else:
     print("Unknown method")

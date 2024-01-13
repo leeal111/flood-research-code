@@ -15,6 +15,7 @@ class key_value:
         self.root = "data"
         self.stivMethod = "sotabase"
         self.validResDir = "valid_result"
+        self.validScoDir = "valid_score"
         self.sumlistPicDir = join("result_sotabase", "07_sum")
         self.stivResPicDir = join("result_sotabase", "11_STIRES")
         self.validRealFileName = "result.npy"
