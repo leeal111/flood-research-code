@@ -1,12 +1,18 @@
+from os import makedirs
 from ananlyze_routine_imp import *
-from key_value import kvs
+from stiv_compute_routine import (
+    root,
+)
+from values import ananlyze_result_dir
 
-res_Path = kvs.ananlyzeResDir
-root = kvs.root
-TestMode = 0
 
-makedirs(res_Path, exist_ok=True)
-if TestMode == 0:
-    pass
-else:
-    print("Unknown method")
+def main():
+    TestMode = 0
+    if TestMode == 0:
+        ananlyze_result_wrong()
+    else:
+        print("Unknown method")
+
+
+if __name__ == "__main__":
+    main()

@@ -7,11 +7,9 @@ import numpy as np
 
 from key_value import kvs
 from stiv_compute_routine_imp import ifRight2LeftForLoc
+from stiv_compute_routine import root
 
-
-root = kvs.root
 res_path = kvs.correctResDir
-
 st_path = kvs.sitePicDir
 al_path = kvs.stivResPicDir
 valid_path = join(kvs.validResDir, kvs.validRealFileName)

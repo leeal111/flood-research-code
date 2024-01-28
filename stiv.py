@@ -149,8 +149,9 @@ class STIV:
 
         # 创建剪裁掩膜
         mask = np.zeros((h, w), dtype=np.uint8)
-        mask[y1:y2, x1:x2] = 255
-
+        # mask[y1:y2, x1:x2] = 255
+        mask[center_y:y2, x1:center_x] = 255
+        mask[y1:center_y, center_x:x2] = 255
         # 将图像与掩膜相乘，将正方形之外的像素置为 0
         result = cv2.bitwise_and(image, image, mask=mask)
 

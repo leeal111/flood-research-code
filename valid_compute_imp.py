@@ -1,14 +1,22 @@
 from os import listdir, makedirs
 import joblib
+from matplotlib import pyplot as plt
 import numpy as np
-from os.path import join, exists
-from key_value import kvs
-from svm_train import svm_process
+from os.path import join, exists, basename
+from sklearn.metrics import roc_auc_score, roc_curve
+from sklearn.model_selection import train_test_split
+from stiv_compute_routine import sum_data_dir
+from svm_train import svm_model_dir, svm_process, model_name
+from values import (
+    valid_result_dir,
+    valid_label_file,
+    valid_score_dir,
+    ananlyze_result_dir,
+)
 
 
 def v1_list_score(imgDir_path, current_img_index):
-    list_path = kvs.sumlistDir
-    _list_path = join(imgDir_path, list_path, f"{current_img_index:04}.npy")
+    _list_path = join(imgDir_path, sum_data_dir, f"{current_img_index:04}.npy")
     sum_list = np.load(_list_path)
     # 计算峰值比例
     sum_list = sum_list / np.max(sum_list)
@@ -28,18 +36,15 @@ def v2_list_score(imgDir_path, current_img_index):
 
 
 def signal_peek_value_list_score(imgDir_path, current_img_index):
-    list_path = kvs.sumlistDir
-    _list_path = join(imgDir_path, list_path, f"{current_img_index:04}.npy")
+    _list_path = join(imgDir_path, sum_data_dir, f"{current_img_index:04}.npy")
     sum_list = np.load(_list_path)
 
     return np.log(np.mean(sum_list))
 
 
 def signal_noise_radio_list_score(imgDir_path, current_img_index, range_len=5):
-    list_path = kvs.sumlistDir
-    _list_path = join(imgDir_path, list_path, f"{current_img_index:04}.npy")
+    _list_path = join(imgDir_path, sum_data_dir, f"{current_img_index:04}.npy")
     sum_list = np.load(_list_path)
-
     max_index = np.argmax(sum_list)
     total = np.max(sum_list)
     for i in range(range_len):
@@ -53,12 +58,10 @@ def signal_noise_radio_list_score(imgDir_path, current_img_index, range_len=5):
 
 
 def svm_list_result(imgDir_path, current_img_index):
-    svm_res_path = kvs.svmResDir
-    modelName = "search"  # kvs.svmModelName
-    list_path = kvs.sumlistDir
-    _list_path = join(imgDir_path, list_path, f"{current_img_index:04}.npy")
+    _modelName = model_name
+    _list_path = join(imgDir_path, sum_data_dir, f"{current_img_index:04}.npy")
     sum_list = svm_process(np.load(_list_path))
-    loaded_model = joblib.load(join(svm_res_path, modelName + ".joblib"))
+    loaded_model = joblib.load(join(svm_model_dir, _modelName + ".joblib"))
     res = loaded_model.predict([sum_list])
     if res > 0.5:
         return 1
@@ -66,18 +69,22 @@ def svm_list_result(imgDir_path, current_img_index):
         return 0
 
 
-def nn_list_result(imgDir_path, current_img_index):
-    return 0
+def nn_ifftimg_result(imgDir_path, current_img_index):
+    ress = np.load(join(imgDir_path, valid_score_dir, f"nn_ifftimg_result.npy"))
+    return ress[current_img_index]
 
 
-validScoreMethods = [
+valid_score_methods = [
     v1_list_score,
     v2_list_score,
     signal_peek_value_list_score,
     signal_noise_radio_list_score,
+    nn_ifftimg_result,
 ]
 
-validResultMethods = [svm_list_result, nn_list_result]
+valid_result_methods = [
+    svm_list_result,
+]
 
 
 def valid_score_data(root, metName, loc=None):
@@ -88,20 +95,21 @@ def valid_score_data(root, metName, loc=None):
             continue
         for dir2 in listdir(join(root, dir1)):
             imgDir_path = join(root, dir1, dir2)
+
             # 需要首先完成数据整理以及算法结果输出
-            if not exists(join(imgDir_path, kvs.validResDir, kvs.validRealFileName)):
-                print(f"{imgDir_path} not exists valid_result")
+            if not exists(join(imgDir_path, valid_score_dir, f"{metName}.npy")):
+                print(f"{imgDir_path} not exists result")
                 continue
 
-            for x in np.load(join(imgDir_path, kvs.validResDir, kvs.validRealFileName)):
+            for x in np.load(join(imgDir_path, valid_result_dir, valid_label_file)):
                 ans.append(x)
-            for x in np.load(join(imgDir_path, kvs.validScoDir, f"{metName}.npy")):
+            for x in np.load(join(imgDir_path, valid_score_dir, f"{metName}.npy")):
                 data.append(x)
 
     return (
         join(
-            kvs.ananlyzeResDir,
-            kvs.validResDir + "_" + (loc if loc != None else ""),
+            ananlyze_result_dir,
+            valid_score_dir + (("_" + loc) if loc != None else ""),
             metName,
         ),
         np.array(ans),
@@ -110,6 +118,8 @@ def valid_score_data(root, metName, loc=None):
 
 
 def valid_score_eval(res_Path, ans, data, div_num=100):
+    ROCplot(basename(res_Path), ans, data)
+
     # 遍历阈值搜索最佳准确率结果
     precisions = []
     corrects = []
@@ -154,3 +164,87 @@ def valid_score_eval(res_Path, ans, data, div_num=100):
         f.write(f"首次达到最大精确率值的阈值：{full_precision_tho_value}\n")
 
     return correct_max_tho_value
+
+
+def valid_result_data(root, metName, loc=None):
+    ans = []
+    data = []
+    for dir1 in listdir(root):
+        if loc != None and loc != dir1:
+            continue
+        for dir2 in listdir(join(root, dir1)):
+            imgDir_path = join(root, dir1, dir2)
+            # 需要首先完成数据整理以及算法结果输出
+            if not exists(join(imgDir_path, valid_result_dir, f"{metName}.npy")):
+                print(f"{imgDir_path} not exists result")
+                continue
+
+            for x in np.load(join(imgDir_path, valid_result_dir, valid_label_file)):
+                ans.append(x)
+            for x in np.load(join(imgDir_path, valid_result_dir, f"{metName}.npy")):
+                data.append(x)
+
+    return (
+        join(
+            ananlyze_result_dir,
+            valid_result_dir + (("_" + loc) if loc != None else ""),
+            metName,
+        ),
+        np.array(ans),
+        np.array(data),
+    )
+
+
+def valid_result_eval(res_Path, ans, data):
+    _data = data.copy()
+    correct = np.sum(_data == ans) / len(_data)
+    TP = np.sum((ans == 1) & (_data == 1))
+    FP = np.sum((ans == 0) & (_data == 1))
+    if (TP + FP) == 0:
+        precision = 1
+    else:
+        precision = TP / (TP + FP)
+
+    # 保存各项数据
+    makedirs(join(res_Path), exist_ok=True)
+    with open(join(res_Path, "res.txt"), "w", encoding="utf-8") as f:
+        f.write(
+            f"准确率：{100*correct}\n",
+        )
+        f.write(f"精确率：{100*precision}\n")
+
+
+def ROCplot(name, ans, data):
+    X_train, X_test, y_train, y_test = train_test_split(
+        np.array(data), np.array(ans), test_size=0.2, random_state=0
+    )
+    _y_test = ans
+    _X_test = data
+    titles = {
+        "v1_list_score": "平稳程度",
+        "v2_list_score": "v2_list_score",
+        "signal_peek_value_list_score": "signal_peek_value_list_score",
+        "signal_noise_radio_list_score": "峰值信噪比",
+        "nn_ifftimg_result": "神经网络",
+    }
+    # 计算 ROC 曲线
+    fpr, tpr, thresholds = roc_curve(_y_test, _X_test, pos_label=1)
+
+    # 计算 AUC
+    auc_score = roc_auc_score(_y_test, _X_test)
+
+    # 绘制 ROC 曲线
+    plt.figure()
+    plt.rcParams["font.sans-serif"] = ["SimHei"]
+    plt.plot(fpr, tpr, label="ROC curve (AUC = %0.2f)" % auc_score)
+    plt.plot([0, 1], [0, 1], "k--")  # 绘制对角线
+    plt.xlim([0.0, 1.0])
+    plt.ylim([0.0, 1.0])
+    plt.xlabel("假阳率", fontsize=20)
+    plt.ylabel("真阳率", fontsize=20)
+    plt.title(titles[name], fontsize=20)
+    plt.legend(loc="lower right",fontsize=20)
+    plt.show()
+
+    # 打印 AUC
+    print("AUC: {:.4f}".format(auc_score))

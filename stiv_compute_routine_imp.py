@@ -32,12 +32,11 @@ def ifRight2LeftForLoc(imgDir_path):
             imgDir_path = os.path.dirname(imgDir_path)
 
 
-def resPath(imgDir_path, stiv):
+def resPath(imgDir_path, name):
     res_path = os.path.join(
         imgDir_path,
-        "result" + ("_" if stiv.methodName != "" else "") + stiv.methodName,
+        "result" + ("_" if name != "" else "") + name,
     )
-
     return res_path
 
 
@@ -83,7 +82,7 @@ def ImgsTest(imgDir_path, stiv):
     print(imgDir_path)
 
     # 整理结果文件夹
-    res_path = resPath(imgDir_path, stiv)
+    res_path = resPath(imgDir_path, stiv.methodName)
     stiv.savePath = res_path
 
     stis = []
@@ -102,7 +101,7 @@ def ImgsTestWithSpeed(imgDir_path, stiv):
     print(imgDir_path + " with speed", end=" ")
 
     # 整理结果文件夹
-    res_path = resPath(imgDir_path, stiv)
+    res_path = resPath(imgDir_path, stiv.methodName)
     stiv.savePath = res_path
 
     stis = []
