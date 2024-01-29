@@ -1,19 +1,15 @@
-from os import listdir, makedirs
+from os import listdir
 import shutil
-
 import numpy as np
-from stiv_compute_routine import root, img_dir
-from os.path import join, exists
-from valid_compute_imp import (
-    valid_result_methods,
-    valid_score_methods,
-)
-from values import (
-    valid_result_dir,
-    valid_label_file,
-    valid_score_dir,
-    ananlyze_result_dir,
-)
+from os.path import join,exists
+
+from sklearn.metrics import roc_auc_score, roc_curve
+from display import ROC_plot
+from utils import call_for_imgss, get_imgs_paths
+from stiv_compute_routine_imp import root
+from valid_compute_imp import valid_score_methods,valid_score_dir,valid_result_dir,valid_label_file
+
+ananlyze_result_dir = "result"
 
 
 def ananlyze_result_wrong():
@@ -28,7 +24,7 @@ def ananlyze_result_wrong():
                 continue
 
             ans = np.load(join(imgDir_path, valid_result_dir, valid_label_file))
-            for met in valid_result_methods + valid_score_methods:
+            for met in valid_score_methods:
                 ress = np.load(
                     join(imgDir_path, valid_result_dir, f"{met.__name__}.npy")
                 )
@@ -58,3 +54,26 @@ def ananlyze_result_wrong():
                         )
                         print(f"{index:04}.jpg")
                     current_img_index += 1
+
+
+def ananlyze_valid_ROC():
+    path_list = get_imgs_paths(root)
+    for met in valid_score_methods:
+        ress = call_for_imgss(path_list, ananlyze_valid_score_call, method=met)
+        anss=call_for_imgss(path_list, ananlyze_valid_label_call, method=met)
+        ROCplot()
+
+def ananlyze_valid_score_call(imgs_path, **kwarg):
+    return np.load(join(imgs_path, valid_score_dir, f"{kwarg["method"].__name__}.npy"))
+
+def ananlyze_valid_label_call(imgs_path, **kwarg):
+    return np.load(join(imgs_path, valid_result_dir, f"result.npy"))
+
+
+def ROCplot(name, ans, data):
+    fpr, tpr, thresholds = roc_curve(ans, data, pos_label=1)
+    auc_score = roc_auc_score(ans, data)
+    ROC_plot(name, fpr, tpr, auc_score)
+    print("AUC: {:.4f}".format(auc_score))
+
+

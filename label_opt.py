@@ -1,6 +1,5 @@
 from os.path import normpath, join
 import numpy as np
-from key_value import kvs
 
 
 def reLabel(mode, imgDir_path, current_img_index):

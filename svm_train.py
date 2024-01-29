@@ -7,7 +7,8 @@ from sklearn.metrics import accuracy_score
 import joblib
 from sklearn.model_selection import GridSearchCV
 import json
-from nn_train import train_data_dir
+
+train_data_dir = ""
 
 
 # SVM的数据归一化

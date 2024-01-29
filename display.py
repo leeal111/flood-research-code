@@ -3,6 +3,7 @@ import numpy as np
 import math
 import matplotlib.pyplot as plt
 
+
 def toImg(data):
     # USage：对于任意数据的np数组，归一化到0-255区域。已经在0-255则仅转换为np.uint8
 
@@ -73,3 +74,24 @@ def img_add_angle(img, angle, noPrintNum=0):
         ] = 255
 
     return img_c
+
+
+def ROC_plot(name, titles, fpr, tpr, auc_score):
+    titles = {
+        "v1_list_score": "平稳程度",
+        "v2_list_score": "v2_list_score",
+        "signal_peek_value_list_score": "signal_peek_value_list_score",
+        "signal_noise_radio_list_score": "峰值信噪比",
+        "nn_ifftimg_result": "神经网络",
+    }
+    plt.figure()
+    plt.rcParams["font.sans-serif"] = ["SimHei"]
+    plt.plot(fpr, tpr, label="ROC curve (AUC = %0.2f)" % auc_score)
+    plt.plot([0, 1], [0, 1], "k--")  # 绘制对角线
+    plt.xlim([0.0, 1.0])
+    plt.ylim([0.0, 1.0])
+    plt.xlabel("假阳率", fontsize=20)
+    plt.ylabel("真阳率", fontsize=20)
+    plt.title(titles[name], fontsize=20)
+    plt.legend(loc="lower right", fontsize=20)
+    plt.show()

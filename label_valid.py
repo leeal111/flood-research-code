@@ -1,4 +1,4 @@
-from os.path import join, exists
+from os.path import join, exists, normpath
 from os import listdir, makedirs
 import numpy as np
 import tkinter as tk
@@ -13,12 +13,10 @@ from stiv_compute_routine_imp import (
     sti_res_dir,
     img_dir,
 )
-from values import (
-    valid_result_dir,
-    valid_label_file,
-    ananlyze_result_dir,
-)
+from ananlyze_routine_imp import ananlyze_result_dir
+from valid_compute_imp import valid_result_dir, valid_label_file
 
+path_list = get_imgs_paths(root)  # [normpath(r"C:\BaseDir\code\20231201_084309")]  #
 
 st_path = ifft_res_dir
 al_path = sti_res_dir
@@ -35,12 +33,11 @@ img_num = 0
 ress = []
 origin_imgs = []
 
-path_list = get_imgs_paths(root)
-
 
 def button1_click():
     # 初始化变量
     global imgs_path
+    global current_dir_index
     imgs_path = path_list[current_dir_index]
     while 1:
         # 检查是否计算以及是否已经标注
@@ -52,6 +49,7 @@ def button1_click():
             print(f"{imgs_path} exists valid_label")
             current_dir_index += 1
             continue
+        break
     print(imgs_path)
 
     # 读取原始图片origin_imgs

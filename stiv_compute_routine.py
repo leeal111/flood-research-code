@@ -3,7 +3,7 @@ from os.path import normpath
 from utils import call_for_imgss, get_imgs_paths
 
 # 配置参数
-test_mode = 3  # 1:img 2:imgs 3:imgs&speed 4:imgss 5：imgssdelete
+test_mode = 4  # 1:img 2:imgs 3:imgs&speed 4:imgss 5：imgssdelete
 imgs_path = normpath(r"C:\BaseDir\code\1")
 img_path = normpath(r"C:\BaseDir\code\20231201_084309\sti002.jpg")
 

@@ -8,14 +8,14 @@ from os.path import join, dirname, splitext, basename, exists
 from display import img_add_angle
 from stiv import STIV
 
-root = "test"
+root = "testdata"
 stiv_method_name = "sotabase"
 stiv_result_dir = "result" + ("_" if stiv_method_name != "" else "") + stiv_method_name
-ifft_res_dir = join(stiv_result_dir, "09_IFFTRES")
-sti_res_dir = join(stiv_result_dir, "11_STIRES")
-img_dir = join(stiv_result_dir, "00_ORIGIN")
-sum_data_dir = join(stiv_result_dir, "10_sumlist")
-ifft_img_dir = join(stiv_result_dir, "06_ifft")
+ifft_res_dir = join(stiv_result_dir, "0_09_IFFTRES")
+sti_res_dir = join(stiv_result_dir, "0_10_STIRES")
+img_dir = join(stiv_result_dir, "0_00_ORIGIN")
+sum_data_dir = join(stiv_result_dir, "1_00_sumlist")
+ifft_img_dir = join(stiv_result_dir, "0_06_ifft")
 
 
 def imgs_if_R2L(imgs_path):
@@ -123,6 +123,7 @@ def imgs_test(imgs_path, if_R2L):
 def imgs_test_with_speed(imgs_path, if_R2L):
     if not exists(join(imgs_path, "hwMot", "flow_speed_evaluation_result.csv")):
         imgs_test(imgs_path, if_R2L)
+        return
 
     print(imgs_path + " with speed", end=" ")
     imgs = []
@@ -253,8 +254,8 @@ def stiv_row_call(imgs_path):
 
 
 def stiv_compute_call(imgs_path):
-    if stiv_result_dir in listdir(imgs_path):
-        return
+    # if stiv_result_dir in listdir(imgs_path):
+    #     return
     imgs_test_with_speed(imgs_path, imgs_if_R2L(imgs_path))
 
 
