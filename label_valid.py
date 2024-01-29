@@ -5,7 +5,8 @@ import tkinter as tk
 import cv2
 from PIL import Image, ImageTk
 
-from stiv_compute_routine import (
+from utils import get_imgs_paths
+from stiv_compute_routine_imp import (
     root,
     stiv_result_dir,
     ifft_res_dir,
@@ -15,7 +16,6 @@ from stiv_compute_routine import (
 from values import (
     valid_result_dir,
     valid_label_file,
-    valid_score_dir,
     ananlyze_result_dir,
 )
 
@@ -25,7 +25,7 @@ al_path = sti_res_dir
 or_path = img_dir
 
 current_dir_index = 0
-imgDir_path = ""
+imgs_path = ""
 al_imgs = []
 al_tkimgs = []
 st_imgs = []
@@ -35,31 +35,29 @@ img_num = 0
 ress = []
 origin_imgs = []
 
-dir_list = []
-for dir1 in listdir(root):
-    for dir2 in listdir(join(root, dir1)):
-        imgDir_path = join(root, dir1, dir2)
-
-        # 检查是否计算以及是否已经标注
-        if not exists(join(imgDir_path, stiv_result_dir)):
-            print(f"{imgDir_path} not exists stiv_result")
-            continue
-        if exists(join(imgDir_path, valid_result_dir, valid_label_file)):
-            continue
-
-        dir_list.append(imgDir_path)
+path_list = get_imgs_paths(root)
 
 
 def button1_click():
     # 初始化变量
-    global imgDir_path
-    imgDir_path = dir_list[current_dir_index]
-    print(imgDir_path)
+    global imgs_path
+    imgs_path = path_list[current_dir_index]
+    while 1:
+        # 检查是否计算以及是否已经标注
+        if not exists(join(imgs_path, stiv_result_dir)):
+            print(f"{imgs_path} not exists stiv_result")
+            current_dir_index += 1
+            continue
+        if exists(join(imgs_path, valid_result_dir, valid_label_file)):
+            print(f"{imgs_path} exists valid_label")
+            current_dir_index += 1
+            continue
+    print(imgs_path)
 
     # 读取原始图片origin_imgs
     global origin_imgs
     origin_imgs = []
-    _or_path = join(imgDir_path, or_path)
+    _or_path = join(imgs_path, or_path)
     for file in listdir(_or_path):
         if not file.endswith(".jpg"):
             continue
@@ -71,7 +69,7 @@ def button1_click():
     global al_tkimgs
     al_imgs = []
     al_tkimgs = []
-    _al_path = join(imgDir_path, al_path)
+    _al_path = join(imgs_path, al_path)
     for file in listdir(_al_path):
         if not file.endswith(".jpg"):
             continue
@@ -87,7 +85,7 @@ def button1_click():
     global st_tkimgs
     st_imgs = []
     st_tkimgs = []
-    _st_path = join(imgDir_path, st_path)
+    _st_path = join(imgs_path, st_path)
     for file in listdir(_st_path):
         if not file.endswith(".jpg"):
             continue
@@ -140,8 +138,8 @@ def button4_click():
     if current_img_index != img_num:
         return
 
-    makedirs(join(imgDir_path, valid_result_dir), exist_ok=True)
-    np.save(join(imgDir_path, valid_result_dir, valid_label_file), ress)
+    makedirs(join(imgs_path, valid_result_dir), exist_ok=True)
+    np.save(join(imgs_path, valid_result_dir, valid_label_file), ress)
 
     current_dir_index += 1
 
