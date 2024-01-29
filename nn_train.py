@@ -64,7 +64,7 @@ def data_collect():
 
 
 def result_extract():
-    nn_scores = np.load("nn_score.npy")
+    nn_scores = np.load("datatrain\\nn_score.npy")
     current_img_index = 0
     for dir1 in listdir(root):
         for dir2 in listdir(join(root, dir1)):

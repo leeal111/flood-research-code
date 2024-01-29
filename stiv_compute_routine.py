@@ -21,7 +21,7 @@ def main():
     TestMode = 1  # 0:video 1:imgs 2:img 3:imgs&speed 4:imgss 5：imgssdelete
     video_path = os.path.normpath(r"")
     imgDir_path = os.path.normpath(
-        r"C:\BaseDir\code\flood\result\valid_wrong\fp\nn_ifftimg_result"
+        r"datatest"
     )
     img_path = os.path.normpath(r"")
 
