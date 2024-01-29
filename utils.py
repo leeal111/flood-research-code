@@ -21,6 +21,14 @@ def get_imgs_data(
         datas.append(data)
 
 
-def call4imgss(imgs_paths, call_func):
+def call_for_imgss(imgs_paths, call_func):
     for imgs_path in imgs_paths:
         call_func(imgs_path)
+
+
+def get_imgs_paths(root):
+    path_list = []
+    for dir1 in listdir(root):
+        for dir2 in listdir(join(root, dir1)):
+            imgs_path = join(root, dir1, dir2)
+            path_list.append(imgs_path)

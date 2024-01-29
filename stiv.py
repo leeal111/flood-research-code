@@ -1,8 +1,6 @@
 import cv2
 import numpy as np
 import math
-import os
-import shutil
 
 from display import *
 
@@ -119,43 +117,35 @@ def partSobel(image, pixelNum):
     return img
 
 
+def imgCrop(image, rangedivR=10):
+    h, w = image.shape[:2]
+    l = min(h, w) // rangedivR
+
+    # 计算图像中心坐标
+    center_x = w // 2
+    center_y = h // 2
+
+    # 计算正方形的左上角和右下角坐标
+    x1 = center_x - l // 2
+    y1 = center_y - l // 2
+    x2 = center_x + l // 2
+    y2 = center_y + l // 2
+
+    # 创建剪裁掩膜
+    mask = np.zeros((h, w), dtype=np.uint8)
+    # mask[y1:y2, x1:x2] = 255
+    mask[center_y:y2, x1:center_x] = 255
+    mask[y1:center_y, center_x:x2] = 255
+    # 将图像与掩膜相乘，将正方形之外的像素置为 0
+    result = cv2.bitwise_and(image, image, mask=mask)
+
+    return result
+
+
 class STIV:
-    def __init__(
-        self,
-        ifSaveProcImg=False,
-        ifRightToLeft=False,
-        savePath=os.path.join("stiv_result"),
-        methodName="",
-    ) -> None:
-        self.ifSaveProcImg = ifSaveProcImg
-        self.ifRightToLeft = ifRightToLeft
-        self.savePath = savePath
+    def __init__(self) -> None:
         self.proImgs = {}
-        self.methodName = methodName
-
-    def imgCrop(self, image, rangedivR=10):
-        h, w = image.shape[:2]
-        l = min(h, w) // rangedivR
-
-        # 计算图像中心坐标
-        center_x = w // 2
-        center_y = h // 2
-
-        # 计算正方形的左上角和右下角坐标
-        x1 = center_x - l // 2
-        y1 = center_y - l // 2
-        x2 = center_x + l // 2
-        y2 = center_y + l // 2
-
-        # 创建剪裁掩膜
-        mask = np.zeros((h, w), dtype=np.uint8)
-        # mask[y1:y2, x1:x2] = 255
-        mask[center_y:y2, x1:center_x] = 255
-        mask[y1:center_y, center_x:x2] = 255
-        # 将图像与掩膜相乘，将正方形之外的像素置为 0
-        result = cv2.bitwise_and(image, image, mask=mask)
-
-        return result
+        self.proDatas = {}
 
     def sti2angle_IFFT(self, img):
         # 消除不同位置的竖直亮度差异。可以改进的地方为以突变边界消除（即50像素）
@@ -176,7 +166,7 @@ class STIV:
         img_fft_pow = pow(img_fft_clr, 2)
 
         # 仅取中心部分
-        img_fft_crop = self.imgCrop(img_fft_pow)
+        img_fft_crop = imgCrop(img_fft_pow)
 
         # 傅里叶变换并取幅值
         img_fe = absFFTshift(img_fft_crop.copy())
@@ -207,22 +197,20 @@ class STIV:
 
         result = 90 - res if res <= 90 else res - 90
 
-        if self.ifSaveProcImg:
-            self.proImgs["std"] = toImg(img_std)
-            self.proImgs["clr"] = toImg(img_clr)
-            self.proImgs["fft"] = toImg(img_fft)
-            self.proImgs["fftclr"] = toImg(img_fft_clr)
-            self.proImgs["fftcrop"] = toImg(img_fft_crop)
+        self.proImgs["std"] = toImg(img_std)
+        self.proImgs["clr"] = toImg(img_clr)
+        self.proImgs["fft"] = toImg(img_fft)
+        self.proImgs["fftclr"] = toImg(img_fft_clr)
+        self.proImgs["fftcrop"] = toImg(img_fft_crop)
 
-            self.proImgs["ifft"] = toImg(img_fe)
+        self.proImgs["ifft"] = toImg(img_fe)
 
-            self.proImgs["sum"] = listImg(sum_list)
-            self.proImgs["FFTRES"] = img_add_angle(self.proImgs["fft"], -result, 200)
-            self.proImgs["IFFTRES"] = img_add_angle(
-                self.proImgs["ifft"], 90 - result, 200
-            )
+        self.proImgs["sum"] = listImg(sum_list)
+        self.proImgs["FFTRES"] = img_add_angle(self.proImgs["fft"], -result, 200)
+        self.proImgs["IFFTRES"] = img_add_angle(self.proImgs["ifft"], 90 - result, 200)
 
-            self.proImgs["sumlist"] = sum_list.copy()
+        self.proDatas["sumlist"] = sum_list.copy()
+
         return result
 
     def sti2angle_FFT(self, img):
@@ -286,15 +274,14 @@ class STIV:
 
         result = res if res <= 90 else 180 - res
 
-        if self.ifSaveProcImg:
-            # self.proImgs["std"] =  toImg(img_std)
-            # self.proImgs["clr"] =  toImg(img_clr)
-            self.proImgs["fft"] = toImg(img_fft)
-            # self.proImgs["fftclr"] =  toImg(img_fft_clr)
+        # self.proImgs["std"] =  toImg(img_std)
+        # self.proImgs["clr"] =  toImg(img_clr)
+        self.proImgs["fft"] = toImg(img_fft)
+        # self.proImgs["fftclr"] =  toImg(img_fft_clr)
 
-            self.proImgs["fe"] = toImg(np.log(absFFTshift(img.copy())))
-            self.proImgs["sum"] = listImg(sum_list)
-            self.proImgs["FFTRES"] = img_add_angle(self.proImgs["fe"], -result, 200)
+        self.proImgs["fe"] = toImg(np.log(absFFTshift(img.copy())))
+        self.proImgs["sum"] = listImg(sum_list)
+        self.proImgs["FFTRES"] = img_add_angle(self.proImgs["fe"], -result, 200)
         return result
 
     def sti2angle(self, img):
@@ -302,65 +289,11 @@ class STIV:
         if len(img.shape) > 2:
             img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
-        # 根据河流方向适应图片搜索角度
-        if self.ifRightToLeft:
-            img_lr = cv2.flip(img, 1)
-        else:
-            img_lr = img
-        if self.ifSaveProcImg:
-            self.proImgs["ORIGIN"] = img_lr
+        self.proImgs["ORIGIN"] = img
+        res = self.sti2angle_IFFT(img.copy())
+        self.proImgs["STIRES"] = img_add_angle(img, 90 - res)
 
-        res = self.sti2angle_IFFT(img_lr)
-
-        if self.ifSaveProcImg:
-            self.proImgs["STIRES"] = img_add_angle(img_lr, 90 - res)
-        return res
-
-    def sti2angleTest(self, img):
-        shutil.rmtree(self.savePath, ignore_errors=True)
-        os.mkdir(self.savePath)
-        res = self.sti2angle(img)
-        index = 0
-        for key, value in self.proImgs.items():
-            if key == "sumlist":
-                np.save(os.path.join(self.savePath, f"{index}-{key}.npy"), value)
-            else:
-                cv2.imwrite(os.path.join(self.savePath, f"{index}-{key}.jpg"), value)
-            index += 1
-        print("single res: " + str(res))
-        return res
-
-    def stis2anglesTest(self, imgs, realress=None):
-        if len(imgs) == 1:
-            return [self.sti2angleTest(imgs[0])]
-
-        shutil.rmtree(self.savePath, ignore_errors=True)
-        os.mkdir(self.savePath)
-        ress = []
-        for i, img in enumerate(imgs):
-            res = self.sti2angle(img)
-            if self.ifSaveProcImg and realress != None:
-                self.proImgs["realRES"] = img_add_angle(
-                    self.proImgs["ORIGIN"], 90 - realress[i]
-                )
-            if self.ifSaveProcImg:
-                if i == 0:
-                    for j, [key, _] in enumerate(self.proImgs.items()):
-                        os.mkdir(os.path.join(self.savePath, f"{j:02}_{key}"))
-                for j, [key, value] in enumerate(self.proImgs.items()):
-                    if key == "sumlist":
-                        rPath = os.path.join(
-                            self.savePath, f"{j:02}_{key}", f"{i:04}.npy"
-                        )
-                        np.save(rPath, value)
-                    else:
-                        rPath = os.path.join(
-                            self.savePath, f"{j:02}_{key}", f"{i:04}.jpg"
-                        )
-                        cv2.imwrite(rPath, value)
-            ress.append(res)
-
-        return ress
+        return res, self.proImgs, self.proDatas
 
 
 if __name__ == "__main__":

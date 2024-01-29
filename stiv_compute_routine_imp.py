@@ -1,15 +1,27 @@
 import shutil
 import cv2
-import os
 import pandas as pd
 import math
 import numpy as np
+from os import listdir, makedirs, remove, rename
+from os.path import join, dirname, splitext, basename, exists
+from display import img_add_angle
+from stiv import STIV
+
+root = "test"
+stiv_method_name = "sotabase"
+stiv_result_dir = "result" + ("_" if stiv_method_name != "" else "") + stiv_method_name
+ifft_res_dir = join(stiv_result_dir, "09_IFFTRES")
+sti_res_dir = join(stiv_result_dir, "11_STIRES")
+img_dir = join(stiv_result_dir, "00_ORIGIN")
+sum_data_dir = join(stiv_result_dir, "10_sumlist")
+ifft_img_dir = join(stiv_result_dir, "06_ifft")
 
 
-def ifRight2LeftForLoc(imgDir_path):
-    imgDir_path_ = imgDir_path
+def imgs_if_R2L(imgs_path):
+    imgs_path_ = imgs_path
     while True:
-        dir1 = os.path.basename(imgDir_path)
+        dir1 = basename(imgs_path)
         if dir1 == "ddh":
             return False
         elif dir1 == "jx":
@@ -24,99 +36,113 @@ def ifRight2LeftForLoc(imgDir_path):
             return False
         elif dir1 == "jxdx":
             return True
+        elif dir1 == "yc":
+            return False
 
-        if imgDir_path == os.path.dirname(imgDir_path):
-            print(f"{imgDir_path_}: unknown ifRightToLeft ")
+        if imgs_path == dirname(imgs_path):
+            print(f"{imgs_path_}: unknown ifRightToLeft ")
             exit()
         else:
-            imgDir_path = os.path.dirname(imgDir_path)
+            imgs_path = dirname(imgs_path)
 
 
-def resPath(imgDir_path, name):
-    res_path = os.path.join(
-        imgDir_path,
-        "result" + ("_" if name != "" else "") + name,
-    )
-    return res_path
-
-
-def renameSti(prefix, path):
-    for file in os.listdir(path):
+def reindex_file(prefix, path):
+    for file in listdir(path):
         if not file.endswith(".jpg"):
             continue
-        name, d = os.path.splitext(file)
+        name, d = splitext(file)
         try:
             index = int(name[len(prefix) :])
         except ValueError:
             continue
-        os.rename(
-            os.path.join(path, file), os.path.join(path, f"{prefix}{index:03}" + d)
-        )
+        rename(join(path, file), join(path, f"{prefix}{index:03}" + d))
 
 
-def rowData2MyData(imgDir_path):
-    # 如果发现在是生数据，那么整理成hwMotCop的形式
-    if "cop" not in os.listdir(imgDir_path):
-        os.makedirs(os.path.join(imgDir_path, "cop"))
-        os.makedirs(os.path.join(imgDir_path, "hwMot"), exist_ok=True)
-        for dir3 in os.listdir(imgDir_path):
-            if dir3 == "cop" or dir3 == "hwMot":
-                continue
-            fileName = os.path.join(imgDir_path, dir3)
-            copyName = os.path.join(imgDir_path, "cop", dir3)
-            if dir3.startswith("STI_MOT") or dir3 == "flow_speed_evaluation_result.csv":
-                shutil.move(
-                    src=fileName,
-                    dst=os.path.join(imgDir_path, "hwMot", dir3),
-                )
-                continue
-            if dir3.startswith("sti"):
-                continue
-            shutil.move(src=fileName, dst=copyName)
-
-        renameSti("sti", imgDir_path)
-        renameSti("STI_MOT", os.path.join(imgDir_path, "hwMot"))
+def flip_img(img, if_R2L):
+    if if_R2L:
+        img_lr = cv2.flip(img, 1)
+    else:
+        img_lr = img
+    return img_lr
 
 
-def ImgsTest(imgDir_path, stiv):
-    print(imgDir_path)
+def img_test(img_path, if_R2L):
+    # 计算
+    print(img_path)
+    img = cv2.imread(img_path)
+    img = flip_img(img, if_R2L)
+    _, proImgs, proDatas = STIV().sti2angle(img)
 
-    # 整理结果文件夹
-    res_path = resPath(imgDir_path, stiv.methodName)
-    stiv.savePath = res_path
+    res_path = join(
+        dirname(img_path),
+        f"{splitext(basename(img_path))[0]}_result_{stiv_method_name}",
+    )
 
-    stis = []
-    for file in os.listdir(imgDir_path):
+    # 结果保存
+    shutil.rmtree(res_path, ignore_errors=True)
+    makedirs(res_path)
+    for index, [key, value] in enumerate(proImgs.items()):
+        cv2.imwrite(join(res_path, f"0_{index:02}-{key}.jpg"), value)
+    for index, [key, value] in enumerate(proDatas.items()):
+        np.save(join(res_path, f"1_{index:02}-{key}.npy"), value)
+
+
+def imgs_test(imgs_path, if_R2L):
+    print(imgs_path)
+    imgs = []
+    for file in listdir(imgs_path):
         if not file.endswith(".jpg"):
             continue
-        img = cv2.imread(os.path.join(imgDir_path, file))
-        stis.append(img[:, :])
+        img = cv2.imread(join(imgs_path, file))
+        imgs.append(img)
 
-    # 开始计算
-    ress = stiv.stis2anglesTest(stis)
-    print(ress, end="\n\n")
+    res_path = join(
+        imgs_path,
+        stiv_result_dir,
+    )
+    shutil.rmtree(res_path, ignore_errors=True)
+    makedirs(res_path)
+
+    for i, img in enumerate(imgs):
+        img = flip_img(img, if_R2L)
+        _, proImgs, proDatas = STIV().sti2angle(img)
+
+        if i == 0:
+            for j, [key, _] in enumerate(proImgs.items()):
+                makedirs(join(res_path, f"0_{j:02}_{key}"))
+            for j, [key, _] in enumerate(proDatas.items()):
+                makedirs(join(res_path, f"1_{j:02}_{key}"))
+        for j, [key, value] in enumerate(proImgs.items()):
+            rPath = join(res_path, f"0_{j:02}_{key}", f"{i:04}.jpg")
+            cv2.imwrite(rPath, value)
+        for j, [key, value] in enumerate(proDatas.items()):
+            rPath = join(res_path, f"1_{j:02}_{key}", f"{i:04}.npy")
+            np.save(rPath, value)
 
 
-def ImgsTestWithSpeed(imgDir_path, stiv):
-    print(imgDir_path + " with speed", end=" ")
+def imgs_test_with_speed(imgs_path, if_R2L):
+    if not exists(join(imgs_path, "hwMot", "flow_speed_evaluation_result.csv")):
+        imgs_test(imgs_path, if_R2L)
 
-    # 整理结果文件夹
-    res_path = resPath(imgDir_path, stiv.methodName)
-    stiv.savePath = res_path
-
-    stis = []
-    for file in os.listdir(imgDir_path):
+    print(imgs_path + " with speed", end=" ")
+    imgs = []
+    for file in listdir(imgs_path):
         if not file.endswith(".jpg"):
             continue
-        img = cv2.imread(os.path.join(imgDir_path, file))
-        stis.append(img)
+        img = cv2.imread(join(imgs_path, file))
+        imgs.append(img)
+
+    res_path = join(
+        imgs_path,
+        stiv_result_dir,
+    )
+    shutil.rmtree(res_path, ignore_errors=True)
+    makedirs(res_path)
 
     df = (
-        pd.read_csv(
-            os.path.join(imgDir_path, "hwMot", "flow_speed_evaluation_result.csv")
-        )
+        pd.read_csv(join(imgs_path, "hwMot", "flow_speed_evaluation_result.csv"))
         .dropna()
-        .tail(len(stis))
+        .tail(len(imgs))
     )
 
     length = df.iloc[:, 7].values
@@ -126,8 +152,24 @@ def ImgsTestWithSpeed(imgDir_path, stiv):
         for i in range(len(realSpeed))
     ]
 
-    # 开始计算
-    ress = stiv.stis2anglesTest(stis, realress)
+    ress = []
+    for i, img in enumerate(imgs):
+        img = flip_img(img, if_R2L)
+        res, proImgs, proDatas = STIV().sti2angle(img)
+        ress.append(res)
+
+        proImgs["realRES"] = img_add_angle(proImgs["ORIGIN"], 90 - realress[i])
+        if i == 0:
+            for j, [key, _] in enumerate(proImgs.items()):
+                makedirs(join(res_path, f"0_{j:02}_{key}"))
+            for j, [key, _] in enumerate(proDatas.items()):
+                makedirs(join(res_path, f"1_{j:02}_{key}"))
+        for j, [key, value] in enumerate(proImgs.items()):
+            rPath = join(res_path, f"0_{j:02}_{key}", f"{i:04}.jpg")
+            cv2.imwrite(rPath, value)
+        for j, [key, value] in enumerate(proDatas.items()):
+            rPath = join(res_path, f"1_{j:02}_{key}", f"{i:04}.npy")
+            np.save(rPath, value)
 
     speed = [
         math.tan(ress[i] / 180 * math.pi) * 25 * length[i] / 750
@@ -136,10 +178,10 @@ def ImgsTestWithSpeed(imgDir_path, stiv):
 
     data = [length, realress, realSpeed, ress, speed]
 
-    if os.path.exists(os.path.join(imgDir_path, "hwMot", "st_ress.txt")):
+    if exists(join(imgs_path, "hwMot", "st_ress.txt")):
         print("and site_ress")
         st_ress = []
-        with open(os.path.join(imgDir_path, "hwMot", "st_ress.txt"), "r") as f:
+        with open(join(imgs_path, "hwMot", "st_ress.txt"), "r") as f:
             for line in f.readlines():
                 st_ress.append(float(line.strip()))
         st_ress = [90 - x if x < 90 else x - 90 for x in st_ress]
@@ -161,7 +203,7 @@ def ImgsTestWithSpeed(imgDir_path, stiv):
         df_save = pd.DataFrame(data)
         df_save = df_save.T
         df_save.to_excel(
-            os.path.join(stiv.savePath, "speed_result.xlsx"),
+            join(res_path, "speed_result.xlsx"),
             index=False,
             header=[
                 "真实长度",
@@ -179,27 +221,48 @@ def ImgsTestWithSpeed(imgDir_path, stiv):
         df_save = pd.DataFrame(data)
         df_save = df_save.T
         df_save.to_excel(
-            os.path.join(stiv.savePath, "speed_result.xlsx"),
+            join(res_path, "speed_result.xlsx"),
             index=False,
             header=["真实长度", "真值角度", "真值速度", "算法角度", "算法速度"],
         )
 
-    print(ress, end="\n\n")
+
+def stiv_row_call(imgs_path):
+    if "cop" in listdir(imgs_path):
+        return
+
+    makedirs(join(imgs_path, "cop"))
+    makedirs(join(imgs_path, "hwMot"), exist_ok=True)
+    for file in listdir(imgs_path):
+        if file == "cop" or file == "hwMot":
+            continue
+        fileName = join(imgs_path, file)
+        copyName = join(imgs_path, "cop", file)
+        if file.startswith("STI_MOT") or file == "flow_speed_evaluation_result.csv":
+            shutil.move(
+                src=fileName,
+                dst=join(imgs_path, "hwMot", file),
+            )
+            continue
+        if file.startswith("sti") or file.startswith("result"):
+            continue
+        shutil.move(src=fileName, dst=copyName)
+
+    reindex_file("sti", imgs_path)
+    reindex_file("STI_MOT", join(imgs_path, "hwMot"))
 
 
-def ImgTest(img_path, stiv):
-    print(img_path)
-    res_path = (
-        os.path.join(
-            os.path.dirname(img_path),
-            os.path.splitext(os.path.basename(img_path))[0] + "_result",
-        )
-        + "_"
-        + stiv.methodName
-    )
-    stiv.savePath = res_path
+def stiv_compute_call(imgs_path):
+    if stiv_result_dir in listdir(imgs_path):
+        return
+    imgs_test_with_speed(imgs_path, imgs_if_R2L(imgs_path))
 
-    # 开始计算
-    img = cv2.imread(img_path)
-    res = stiv.sti2angleTest(img[:, :])
-    print(res, end="\n\n")
+
+def stiv_del_call(imgs_path):
+    del_path = join(imgs_path, "valid_result", "result_.npy")
+    # shutil.rmtree(
+    #     del_path,
+    #     ignore_errors=True,
+    # )
+    if exists(del_path):
+        remove(del_path)

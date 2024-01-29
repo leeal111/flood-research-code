@@ -6,7 +6,7 @@ from PIL import Image, ImageTk
 import numpy as np
 
 from key_value import kvs
-from stiv_compute_routine_imp import ifRight2LeftForLoc
+from stiv_compute_routine_imp import imgs_if_R2L
 from stiv_compute_routine import root
 
 res_path = kvs.correctResDir
@@ -45,7 +45,7 @@ valid_data = []
 
 
 def ifFlip(img, path):
-    if ifRight2LeftForLoc(path) == True:
+    if imgs_if_R2L(path) == True:
         return cv2.flip(img, 1)
     else:
         return img
