@@ -294,7 +294,3 @@ class STIV:
         self.proImgs["STIRES"] = img_add_angle(img, 90 - res)
 
         return res, self.proImgs, self.proDatas
-
-
-if __name__ == "__main__":
-    pass

@@ -8,7 +8,7 @@ from os.path import join, dirname, splitext, basename, exists
 from display import img_add_angle
 from stiv import STIV
 
-root = "testdata"
+root = "data"
 stiv_method_name = "sotabase"
 stiv_result_dir = "result" + ("_" if stiv_method_name != "" else "") + stiv_method_name
 ifft_res_dir = join(stiv_result_dir, "0_09_IFFTRES")
@@ -260,10 +260,10 @@ def stiv_compute_call(imgs_path):
 
 
 def stiv_del_call(imgs_path):
-    del_path = join(imgs_path, "valid_result", "result_.npy")
-    # shutil.rmtree(
-    #     del_path,
-    #     ignore_errors=True,
-    # )
+    del_path = join(imgs_path, "valid_score", "v2_list_score.npy")
+    shutil.rmtree(
+        del_path,
+        ignore_errors=True,
+    )
     if exists(del_path):
         remove(del_path)

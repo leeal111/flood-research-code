@@ -53,7 +53,7 @@ def svm_list_result(imgs_path, current_img_index):
     _list_path = join(imgs_path, sum_data_dir, f"{current_img_index:04}.npy")
     sum_list = svm_process(np.load(_list_path))
     loaded_model = joblib.load(join(svm_model_dir, _modelName + ".joblib"))
-    return loaded_model.predict([sum_list])
+    return loaded_model.decision_function([sum_list])[0]
 
 
 def nn_ifftimg_result(imgs_path, current_img_index):
@@ -74,6 +74,7 @@ valid_score_methods = [
 
 
 def valid_score_call(imgs_path):
+    print(imgs_path)
     if not exists(join(imgs_path, stiv_result_dir)):
         print(f"{imgs_path} not exists stiv_result")
         return
@@ -99,7 +100,6 @@ def score_compute(imgs_path, met):
             continue
         ress.append(met(imgs_path, current_img_index))
         current_img_index += 1
-
     makedirs(join(imgs_path, valid_score_dir), exist_ok=True)
     np.save(
         join(imgs_path, valid_score_dir, f"{met.__name__}.npy"),
@@ -108,6 +108,7 @@ def score_compute(imgs_path, met):
 
 
 def result_compute(imgs_path, met, tho):
+    print(imgs_path)
     ress = np.load(join(imgs_path, valid_score_dir, f"{met.__name__}.npy"))
     ress = np.where(ress < tho, 0, 1)
     makedirs(join(imgs_path, valid_result_dir), exist_ok=True)

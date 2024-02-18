@@ -6,7 +6,7 @@ path_list = get_imgs_paths(root)
 call_for_imgss(path_list, valid_score_call)
 
 valid_thos = [
-    0.5,
+    0.8,
     0.5,
     0.5,
     0.5,

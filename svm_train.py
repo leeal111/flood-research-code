@@ -8,7 +8,8 @@ import joblib
 from sklearn.model_selection import GridSearchCV
 import json
 
-train_data_dir = ""
+train_data_dir = "result\\data"
+ananlyze_result_dir = "result"
 
 
 # SVM的数据归一化
@@ -26,26 +27,19 @@ def stringify_dict(dictionary):
     return json_str
 
 
-mode = 1
-svm_dic = {"kernel": "linear"}
+mode = 1  # 0:参数 1:搜索
+svm_dic = {"kernel": "linear"}  # svm参数
 svm_model_dir = join("result", "valid_model")
 model_name = stringify_dict(svm_dic) if mode == 0 else "GridSearch"
 
 
 def main():
     global model_name
-    # SVM训练要点：
-    # 数据预处理：特征缩放、特征选择、数据平衡
-    # 核函数选择：线性核、多项式核和高斯核（径向基函数核）
-    # 超参数调优：正则化参数C、核函数参数，交叉验证或网格搜索
-    # 特征工程：
     res_path = svm_model_dir
 
     X = np.load(join(train_data_dir, "sumlists.npy"))
     Y = np.load(join(train_data_dir, "labels.npy"))
     X = [svm_process(x) for x in X]
-    pos_num = np.sum(np.array(Y) > 0)
-    neg_num = np.sum(np.array(Y) < 0)
     X_train, X_test, y_train, y_test = train_test_split(
         np.array(X), np.array(Y), test_size=0.2, random_state=0
     )
@@ -66,24 +60,28 @@ def main():
     else:
         # 网格搜索
         svr = svm.SVC()
-        parameters = {
-            "C": [0.001, 0.003, 0.006, 0.009, 0.01, 0.04, 0.08, 0.1, 0.2, 0.5, 1.0],
-            "kernel": ("rbf",),
-            "gamma": [0.001, 0.005, 0.1, 0.15, 0.20, 0.23, 0.27],
-            "decision_function_shape": ["ovo", "ovr"],
-            # "class_weight": [{-1: pos_num, 1: neg_num}],
+        param_grid = {
+            "C": [1],
+            "kernel": ["linear"],
+            "degree": [2],
+            "gamma": ["scale"],
+            "coef0": [0.0],
+            "shrinking": [False],
+            "probability": [False],
         }
-        clf = GridSearchCV(svr, parameters)
-        clf.fit(np.array(X), np.array(Y))
+
+        clf = GridSearchCV(svr, param_grid)
+        clf.fit(np.array(X_train), np.array(y_train))
 
         # 保存
         best_model = clf.best_estimator_
-        best_params = clf.best_params_
         results = clf.cv_results_
         for mean_score, params in zip(results["mean_test_score"], results["params"]):
             if mean_score < 0.8:
                 continue
-            print(f"Mean score: {mean_score}, Parameters: {params}")
+            makedirs(join(ananlyze_result_dir, "svm_train"))
+            with open(join(ananlyze_result_dir, "svm_train", "result.txt"), "w") as f:
+                f.write(f"Mean score: {mean_score}, Parameters: {params}\n")
         makedirs(res_path, exist_ok=True)
         joblib.dump(best_model, join(res_path, model_name + ".joblib"))
 

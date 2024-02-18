@@ -76,13 +76,13 @@ def img_add_angle(img, angle, noPrintNum=0):
     return img_c
 
 
-def ROC_plot(name, titles, fpr, tpr, auc_score):
+def rocImg(name, fpr, tpr, auc_score):
     titles = {
         "v1_list_score": "平稳程度",
-        "v2_list_score": "v2_list_score",
         "signal_peek_value_list_score": "signal_peek_value_list_score",
         "signal_noise_radio_list_score": "峰值信噪比",
         "nn_ifftimg_result": "神经网络",
+        "svm_list_result": "支持向量机",
     }
     plt.figure()
     plt.rcParams["font.sans-serif"] = ["SimHei"]
@@ -94,4 +94,8 @@ def ROC_plot(name, titles, fpr, tpr, auc_score):
     plt.ylabel("真阳率", fontsize=20)
     plt.title(titles[name], fontsize=20)
     plt.legend(loc="lower right", fontsize=20)
-    plt.show()
+    fig = plt.gcf()
+    fig.canvas.draw()
+    rgba_img = np.array(fig.canvas.renderer.buffer_rgba())
+    plt.clf()
+    return cv2.cvtColor(rgba_img, cv2.COLOR_RGB2BGR)

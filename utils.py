@@ -4,6 +4,19 @@ import cv2
 import numpy as np
 
 
+def imgPreCrop(img):
+    image = img
+    height, width, _ = image.shape
+    center_x = width // 2
+    center_y = height // 2
+    crop_size = 2**9
+    start_x = center_x - crop_size // 2
+    start_y = center_y - crop_size // 2
+    cropped_image = image[start_y : start_y + crop_size, start_x : start_x + crop_size]
+
+    return cropped_image
+
+
 def get_imgs_data(
     imgs_path,
     datas_dir,
@@ -13,18 +26,21 @@ def get_imgs_data(
     for file in listdir(datas_path):
         data_path = join(datas_path, file)
         if file.endswith("jpg"):
-            data = cv2.imread(data_path)
+            data = imgPreCrop(cv2.imread(data_path))
         elif file.endswith("npy"):
             data = np.load(data_path)
         else:
             print("get_imgs_data error")
         datas.append(data)
+    return datas
 
 
 def call_for_imgss(imgs_paths, call_func, **kwarg):
     ress = []
     for imgs_path in imgs_paths:
         res = call_func(imgs_path, **kwarg)
+        if res is None:
+            continue
         ress.append(res)
     return ress
 

@@ -24,7 +24,7 @@ $scriptDirectory = Split-Path -Path $scriptPath -Parent
 Set-Location "$scriptDirectory\.."
 
 #本地下载，如果下载成功复制到$localDataDir下
-$localDataDir = "data"
+$localDataDir = "data_new"
 $localDataPath = "$localdataDir\$locName\$dateTime"
 $localTempPath = "deprecated\data\temp"
 while ($true) {
