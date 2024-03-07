@@ -1,5 +1,6 @@
 from os import makedirs
 from os.path import join
+import cv2
 import numpy as np
 from sklearn import svm
 from sklearn.model_selection import train_test_split
@@ -7,6 +8,10 @@ from sklearn.metrics import accuracy_score
 import joblib
 from sklearn.model_selection import GridSearchCV
 import json
+import time
+from display import line_chart_img, lines_chart_img
+
+from utils import compute_mean_precision, compute_precision
 
 train_data_dir = "result\\data"
 ananlyze_result_dir = "result"
@@ -60,28 +65,33 @@ def main():
     else:
         # 网格搜索
         svr = svm.SVC()
+        searchStr="coef0"
         param_grid = {
-            "C": [1],
-            "kernel": ["linear"],
-            "degree": [2],
-            "gamma": ["scale"],
-            "coef0": [0.0],
-            "shrinking": [False],
-            "probability": [False],
-        }
-
-        clf = GridSearchCV(svr, param_grid)
+    'C': [0.01,0.1,1], #惩罚参数, 0.01, 0.1, 1, 10, 100, 1000
+    'kernel': ['poly'], #核函数, '', 'sigmoid'
+    'degree': [2,3,4], #多项式核函数的次数
+    # 'gamma': ['scale'], #高斯核函数的带宽, 'auto', 0.001, 0.01, 0.1, 1
+    'coef0': [-0.5,0.0, 0.5], #多项式核函数和sigmoid核函数的常数项
+    'shrinking': [True],
+    'probability': [True]
+}
+        clf = GridSearchCV(svr, param_grid,n_jobs=-1)
+        stime = time.time()
         clf.fit(np.array(X_train), np.array(y_train))
-
+        etime = time.time()
         # 保存
         best_model = clf.best_estimator_
+        best_para=clf.best_params_
         results = clf.cv_results_
-        for mean_score, params in zip(results["mean_test_score"], results["params"]):
-            if mean_score < 0.8:
-                continue
-            makedirs(join(ananlyze_result_dir, "svm_train"))
-            with open(join(ananlyze_result_dir, "svm_train", "result.txt"), "w") as f:
+        
+        makedirs(join(ananlyze_result_dir, "svm_train"), exist_ok=True)
+        with open(join(ananlyze_result_dir, "svm_train", "result.txt"), "w") as f:
+            for mean_score, params in zip(results["mean_test_score"], results["params"]):
                 f.write(f"Mean score: {mean_score}, Parameters: {params}\n")
+            f.write(f"total time: {etime-stime}, total nums: {len(results["mean_test_score"])}\n")
+            f.write(f"best paras: {best_para}\n")
+        # cv2.imwrite(join(ananlyze_result_dir, "svm_train", "result.jpg"),line_chart_img(results["mean_test_score"],param_grid[searchStr])) 
+        
         makedirs(res_path, exist_ok=True)
         joblib.dump(best_model, join(res_path, model_name + ".joblib"))
 

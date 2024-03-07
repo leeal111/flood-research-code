@@ -3,9 +3,10 @@ import shutil
 import cv2
 import numpy as np
 from os.path import join,exists
-from sklearn.metrics import roc_auc_score, roc_curve
-from display import rocImg
-from utils import call_for_imgss, get_imgs_paths
+from sklearn.metrics import precision_recall_curve, roc_auc_score, roc_curve
+from sklearn.model_selection import train_test_split
+from display import pr_img, roc_img
+from utils import call_for_imgss, compute_f1_score, compute_mean_precision, get_imgs_paths
 from stiv_compute_routine_imp import root,img_dir
 from valid_compute_imp import valid_score_methods,valid_score_dir,valid_result_dir,valid_label_file
 
@@ -49,20 +50,40 @@ def ananlyze_valid_score_call(imgs_path, **kwarg):
     return np.load(join(imgs_path, valid_score_dir, f"{kwarg["method"].__name__}.npy"))
 
 def ananlyze_valid_label_call(imgs_path, **kwarg):
-    return np.load(join(imgs_path, valid_result_dir, f"result.npy"))
-
-def computeROC(name, ans, data):
-    fpr, tpr, thresholds = roc_curve(ans, data)
-    auc_score = roc_auc_score(ans, data)
-    makedirs(join(ananlyze_result_dir,valid_score_dir,name),exist_ok=True)
-    cv2.imwrite(join(ananlyze_result_dir,valid_score_dir,name,"ROC.jpg"),rocImg(name, fpr, tpr, auc_score)) 
+    return np.load(join(imgs_path, valid_result_dir, f"result.npy"))    
 
 def ananlyze_valid_ROC():
-    shutil.rmtree(join(ananlyze_result_dir, valid_score_dir), ignore_errors=True)
+    res_path=join(ananlyze_result_dir, valid_score_dir+"_roc")
+    shutil.rmtree(res_path, ignore_errors=True)
     path_list = get_imgs_paths(root)
     for met in valid_score_methods:
-        ress = call_for_imgss(path_list, ananlyze_valid_score_call, method=met)
-        anss=call_for_imgss(path_list, ananlyze_valid_label_call, method=met)
-        computeROC(met.__name__,np.concatenate(np.array(anss)),np.concatenate(np.array(ress)))
+        
+        ress = np.concatenate(call_for_imgss(path_list, ananlyze_valid_score_call, method=met))
+        anss=np.concatenate(call_for_imgss(path_list, ananlyze_valid_label_call, method=met))
+
+        ress_train, ress_test, anss_train, anss_test = train_test_split(
+        ress,anss, test_size=0.2, random_state=0
+    )
+        
+        name, ans, data=met.__name__,anss_test,ress_test
+        fpr, tpr, _ = roc_curve(ans, data)
+        auc_score = roc_auc_score(ans, data)
+        makedirs(res_path,exist_ok=True)
+        cv2.imwrite(join(res_path,name+"ROC.jpg"),roc_img(name, fpr, tpr, auc_score)) 
+
+def ananlyze_valid_PR():
+    res_path=join(ananlyze_result_dir, valid_score_dir+"_pr")
+    shutil.rmtree(res_path, ignore_errors=True)
+    path_list = get_imgs_paths(root)
+    for met in valid_score_methods:
+        ress = np.concatenate(call_for_imgss(path_list, ananlyze_valid_score_call, method=met))
+        anss=np.concatenate(call_for_imgss(path_list, ananlyze_valid_label_call, method=met))
+        ress_train, ress_test, anss_train, anss_test = train_test_split(ress,anss, test_size=0.2, random_state=0)
+        
+        name, ans, data=met.__name__,anss_test,ress_test
+        precision, recall, _ = precision_recall_curve(ans, data)
+        f1_score = compute_mean_precision(ans, data)
+        makedirs(res_path,exist_ok=True)
+        cv2.imwrite(join(res_path,name+"PR.jpg"),pr_img(name, precision, recall, f1_score)) 
 
 

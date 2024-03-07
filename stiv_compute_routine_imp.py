@@ -5,7 +5,7 @@ import math
 import numpy as np
 from os import listdir, makedirs, remove, rename
 from os.path import join, dirname, splitext, basename, exists
-from display import img_add_angle
+from display import add_angle_img
 from stiv import STIV
 
 root = "data"
@@ -159,7 +159,7 @@ def imgs_test_with_speed(imgs_path, if_R2L):
         res, proImgs, proDatas = STIV().sti2angle(img)
         ress.append(res)
 
-        proImgs["realRES"] = img_add_angle(proImgs["ORIGIN"], 90 - realress[i])
+        proImgs["realRES"] = add_angle_img(proImgs["ORIGIN"], 90 - realress[i])
         if i == 0:
             for j, [key, _] in enumerate(proImgs.items()):
                 makedirs(join(res_path, f"0_{j:02}_{key}"))

@@ -197,17 +197,17 @@ class STIV:
 
         result = 90 - res if res <= 90 else res - 90
 
-        self.proImgs["std"] = toImg(img_std)
-        self.proImgs["clr"] = toImg(img_clr)
-        self.proImgs["fft"] = toImg(img_fft)
-        self.proImgs["fftclr"] = toImg(img_fft_clr)
-        self.proImgs["fftcrop"] = toImg(img_fft_crop)
+        self.proImgs["std"] = normalize_img(img_std)
+        self.proImgs["clr"] = normalize_img(img_clr)
+        self.proImgs["fft"] = normalize_img(img_fft)
+        self.proImgs["fftclr"] = normalize_img(img_fft_clr)
+        self.proImgs["fftcrop"] = normalize_img(img_fft_crop)
 
-        self.proImgs["ifft"] = toImg(img_fe)
+        self.proImgs["ifft"] = normalize_img(img_fe)
 
-        self.proImgs["sum"] = listImg(sum_list)
-        self.proImgs["FFTRES"] = img_add_angle(self.proImgs["fft"], -result, 200)
-        self.proImgs["IFFTRES"] = img_add_angle(self.proImgs["ifft"], 90 - result, 200)
+        self.proImgs["sum"] = line_chart_img(sum_list)
+        self.proImgs["FFTRES"] = add_angle_img(self.proImgs["fft"], -result, 200)
+        self.proImgs["IFFTRES"] = add_angle_img(self.proImgs["ifft"], 90 - result, 200)
 
         self.proDatas["sumlist"] = sum_list.copy()
 
@@ -276,12 +276,12 @@ class STIV:
 
         # self.proImgs["std"] =  toImg(img_std)
         # self.proImgs["clr"] =  toImg(img_clr)
-        self.proImgs["fft"] = toImg(img_fft)
+        self.proImgs["fft"] = normalize_img(img_fft)
         # self.proImgs["fftclr"] =  toImg(img_fft_clr)
 
-        self.proImgs["fe"] = toImg(np.log(absFFTshift(img.copy())))
-        self.proImgs["sum"] = listImg(sum_list)
-        self.proImgs["FFTRES"] = img_add_angle(self.proImgs["fe"], -result, 200)
+        self.proImgs["fe"] = normalize_img(np.log(absFFTshift(img.copy())))
+        self.proImgs["sum"] = line_chart_img(sum_list)
+        self.proImgs["FFTRES"] = add_angle_img(self.proImgs["fe"], -result, 200)
         return result
 
     def sti2angle(self, img):
@@ -291,6 +291,6 @@ class STIV:
 
         self.proImgs["ORIGIN"] = img
         res = self.sti2angle_IFFT(img.copy())
-        self.proImgs["STIRES"] = img_add_angle(img, 90 - res)
+        self.proImgs["STIRES"] = add_angle_img(img, 90 - res)
 
         return res, self.proImgs, self.proDatas
