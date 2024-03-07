@@ -2,9 +2,8 @@ __pycache__
 .vscode
 data
 deprecated/data
-result
-temp.py
-datatrain
-datatest
-testdata
 data_new
+data_high
+data_rob
+result
+
