@@ -84,8 +84,8 @@ def valid_score_call(imgs_path):
 
 
 def valid_result_call(imgs_path, **kwarg):
-    if not exists(join(imgs_path, stiv_result_dir)):
-        print(f"{imgs_path} not exists stiv_result")
+    if not exists(join(imgs_path, valid_score_dir)):
+        print(f"{imgs_path} not exists valid_score")
         return
 
     for i, met in enumerate(valid_score_methods):

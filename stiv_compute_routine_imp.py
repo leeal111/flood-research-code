@@ -254,8 +254,8 @@ def stiv_row_call(imgs_path):
 
 
 def stiv_compute_call(imgs_path):
-    # if stiv_result_dir in listdir(imgs_path):
-    #     return
+    if stiv_result_dir in listdir(imgs_path):
+        return
     imgs_test_with_speed(imgs_path, imgs_if_R2L(imgs_path))
 
 
