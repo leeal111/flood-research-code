@@ -12,6 +12,7 @@ from valid_compute_imp import valid_score_methods,valid_score_dir,valid_result_d
 
 ananlyze_result_dir = "result"
 
+# 对每一个imgs_path执行遍历检查错误的图像并复制到指定位置
 def ananlyze_valid_wrong_call(imgs_path):
     if not exists(join(imgs_path, valid_result_dir, valid_label_file)):
         print(f"{imgs_path} not exists valid_label")
@@ -52,7 +53,7 @@ def ananlyze_valid_score_call(imgs_path, **kwarg):
 def ananlyze_valid_label_call(imgs_path, **kwarg):
     return np.load(join(imgs_path, valid_result_dir, f"result.npy"))    
 
-def ananlyze_valid_ROC():
+def ananlyze_valid_ROC(if_train_test_split=False ):
     res_path=join(ananlyze_result_dir, valid_score_dir+"_roc")
     shutil.rmtree(res_path, ignore_errors=True)
     path_list = get_imgs_paths(root)
@@ -61,26 +62,30 @@ def ananlyze_valid_ROC():
         ress = np.concatenate(call_for_imgss(path_list, ananlyze_valid_score_call, method=met))
         anss=np.concatenate(call_for_imgss(path_list, ananlyze_valid_label_call, method=met))
 
-        ress_train, ress_test, anss_train, anss_test = train_test_split(
-        ress,anss, test_size=0.2, random_state=0
-    )
-        
-        name, ans, data=met.__name__,anss_test,ress_test
+        if if_train_test_split==True:
+            ress_train, ress_test, anss_train, anss_test = train_test_split(ress,anss, test_size=0.2, random_state=0)
+            name, ans, data=met.__name__,anss_test,ress_test
+        else:
+            name, ans, data=met.__name__,anss,ress
         fpr, tpr, _ = roc_curve(ans, data)
         auc_score = roc_auc_score(ans, data)
         makedirs(res_path,exist_ok=True)
         cv2.imwrite(join(res_path,name+"ROC.jpg"),roc_img(name, fpr, tpr, auc_score)) 
 
-def ananlyze_valid_PR():
+def ananlyze_valid_PR(if_train_test_split=False ):
     res_path=join(ananlyze_result_dir, valid_score_dir+"_pr")
     shutil.rmtree(res_path, ignore_errors=True)
     path_list = get_imgs_paths(root)
     for met in valid_score_methods:
         ress = np.concatenate(call_for_imgss(path_list, ananlyze_valid_score_call, method=met))
         anss=np.concatenate(call_for_imgss(path_list, ananlyze_valid_label_call, method=met))
-        ress_train, ress_test, anss_train, anss_test = train_test_split(ress,anss, test_size=0.2, random_state=0)
         
-        name, ans, data=met.__name__,anss_test,ress_test
+        if if_train_test_split==True:
+            ress_train, ress_test, anss_train, anss_test = train_test_split(ress,anss, test_size=0.2, random_state=0)
+            name, ans, data=met.__name__,anss_test,ress_test
+        else:
+            name, ans, data=met.__name__,anss,ress
+        
         precision, recall, _ = precision_recall_curve(ans, data)
         f1_score = compute_mean_precision(ans, data)
         makedirs(res_path,exist_ok=True)
