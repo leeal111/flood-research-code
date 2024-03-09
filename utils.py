@@ -36,6 +36,10 @@ def get_imgs_data(
     return datas
 
 
+def example_call(imgs_path, **kwarg):
+    pass
+
+
 def call_for_imgss(imgs_paths, call_func, **kwarg):
     ress = []
     for imgs_path in imgs_paths:
@@ -47,6 +51,7 @@ def call_for_imgss(imgs_paths, call_func, **kwarg):
 
 
 def get_imgs_paths(root):
+    root = join("data", root)
     path_list = []
     for dir1 in listdir(root):
         for dir2 in listdir(join(root, dir1)):

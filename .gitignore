@@ -2,8 +2,5 @@ __pycache__
 .vscode
 data
 deprecated/data
-data_new
-data_high
-data_rob
+test
 result
-

@@ -8,7 +8,7 @@ from os.path import join, dirname, splitext, basename, exists
 from display import add_angle_img
 from stiv import STIV
 
-root = "data"
+root = "data_base"
 stiv_method_name = "sotabase"
 stiv_result_dir = "result" + ("_" if stiv_method_name != "" else "") + stiv_method_name
 ifft_res_dir = join(stiv_result_dir, "0_09_IFFTRES")
