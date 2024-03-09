@@ -4,11 +4,11 @@ import pandas as pd
 import math
 import numpy as np
 from os import listdir, makedirs, remove, rename
-from os.path import join, dirname, splitext, basename, exists
+from os.path import join, dirname, splitext, basename, exists, isdir
 from display import add_angle_img
 from stiv import STIV
 
-root = "data_base"
+root = "data_gaussian_noise"
 stiv_method_name = "sotabase"
 stiv_result_dir = "result" + ("_" if stiv_method_name != "" else "") + stiv_method_name
 ifft_res_dir = join(stiv_result_dir, "0_09_IFFTRES")
@@ -245,7 +245,7 @@ def stiv_row_call(imgs_path):
                 dst=join(imgs_path, "hwMot", file),
             )
             continue
-        if file.startswith("sti") or file.startswith("result"):
+        if file.startswith("sti") or isdir(join(imgs_path, file)):
             continue
         shutil.move(src=fileName, dst=copyName)
 
