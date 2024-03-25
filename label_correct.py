@@ -1,69 +1,102 @@
 import tkinter as tk
 import cv2
-from os.path import join, exists
+from os.path import join, exists, isdir
 from os import listdir, makedirs
 from PIL import Image, ImageTk
 import numpy as np
+from ananlyze_routine_imp import ananlyze_result_dir
 
-from key_value import kvs
-from stiv_compute_routine_imp import imgs_if_R2L
-from stiv_compute_routine import root
+correct_result_dir = "correct_result"
+correct_al_result_file = "al_result.npy"
+correct_st_result_file = "st_result.npy"
 
-res_path = kvs.correctResDir
-st_path = kvs.sitePicDir
-al_path = kvs.stivResPicDir
-valid_path = join(kvs.validResDir, kvs.validRealFileName)
+from stiv_compute_routine_imp import (
+    imgs_if_R2L,
+    stiv_result_dir,
+    site_img_dir,
+    sti_res_dir,
+    root,
+)
+from utils import get_imgs_paths
+from valid_compute_imp import (
+    valid_label_file,
+    img_dir,
+    valid_result_dir,
+    valid_score_methods,
+)
 
-# 需要处理的数据集路径——排除已处理的
-dir_list = []
-for dir1 in listdir(root):
-    for dir2 in listdir(join(root, dir1)):
-        imgDir_path = join(root, dir1, dir2)
 
-        # 需要首先完成有效性判断
-        if not exists(join(imgDir_path, valid_path)):
-            print(f"{imgDir_path} not exists valid_result")
-            continue
+correct_result_dir = "correct_result"
+correct_al_result_file = "al_result2.npy"
+correct_st_result_file = "st_result2.npy"
 
-        # 检查是否存在人工标注结果，存在则忽略
-        if exists(join(imgDir_path, res_path, kvs.al_result_resName)):
-            continue
-        dir_list.append(imgDir_path)
+
+def ifFlip(img, path):
+    if imgs_if_R2L(path):
+        return cv2.flip(img, 1)
+    else:
+        return img
+    
+st_path = site_img_dir
+al_path = sti_res_dir
+or_path = img_dir
+valid_result_path = join(valid_result_dir, f"signal_noise_radio_list_score.npy")
+
+path_list = get_imgs_paths(root)
 
 current_dir_index = 0
-imgDir_path = ""
+imgs_path = ""
 al_imgs = []
 al_tkimgs = []
 st_imgs = []
 st_tkimgs = []
-origin_imgs = []
 current_img_index = 0
 img_num = 0
 al_ress = []
 st_ress = []
-valid_data = []
-
-
-def ifFlip(img, path):
-    if imgs_if_R2L(path) == True:
-        return cv2.flip(img, 1)
-    else:
-        return img
+valid_result = []
+origin_imgs = []
 
 
 def button1_click():
     # 初始化变量
-    global imgDir_path
-    imgDir_path = dir_list[current_dir_index]
-    print(imgDir_path)
+    global imgs_path
+    global current_dir_index
+
+    if current_dir_index == len(path_list):
+        print(f"not imgs more!")
+        return
+
+    imgs_path = path_list[current_dir_index]
+    while 1:
+        # 检查是否计算以及是否已经标注
+        if not exists(join(imgs_path, stiv_result_dir)):
+            print(f"{imgs_path} not exists stiv_result")
+            current_dir_index += 1
+            if current_dir_index == len(path_list):
+                print(f"not imgs more!")
+                return
+            imgs_path = path_list[current_dir_index]
+            continue
+        if exists(join(imgs_path, correct_result_dir, correct_al_result_file)):
+            print(f"{imgs_path} exists al_result")
+            current_dir_index += 1
+            if current_dir_index == len(path_list):
+                print(f"not imgs more!")
+                return
+            imgs_path = path_list[current_dir_index]
+            continue
+        break
+    print(imgs_path)
 
     # 读取原始图片origin_imgs
     global origin_imgs
     origin_imgs = []
-    for file in listdir(imgDir_path):
+    _or_path = join(imgs_path, or_path)
+    for file in listdir(_or_path):
         if not file.endswith(".jpg"):
             continue
-        img = ifFlip(cv2.imread(join(imgDir_path, file)), imgDir_path)
+        img = cv2.imread(join(_or_path, file))
         origin_imgs.append(img.copy())
 
     # 读取算法图片al_imgs、al_tkimgs
@@ -71,7 +104,7 @@ def button1_click():
     global al_tkimgs
     al_imgs = []
     al_tkimgs = []
-    _al_path = join(imgDir_path, al_path)
+    _al_path = join(imgs_path, al_path)
     for file in listdir(_al_path):
         if not file.endswith(".jpg"):
             continue
@@ -87,11 +120,11 @@ def button1_click():
     global st_tkimgs
     st_imgs = []
     st_tkimgs = []
-    _st_path = join(imgDir_path, st_path)
+    _st_path = join(imgs_path, st_path)
     for file in listdir(_st_path):
         if not file.endswith(".jpg"):
             continue
-        img = ifFlip(cv2.imread(join(_st_path, file)), imgDir_path)
+        img = ifFlip(cv2.imread(join(_st_path, file)), imgs_path)
         st_imgs.append(img.copy())
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         img = Image.fromarray(img)
@@ -107,7 +140,7 @@ def button1_click():
     img_num = len(st_tkimgs)
     al_ress = []
     st_ress = []
-    valid_data = np.load(join(imgDir_path, valid_path))
+    valid_data = np.load(join(imgs_path, valid_result_path))
     nextImg()
 
 
@@ -119,9 +152,11 @@ def nextImg():
     while valid_data[current_img_index] == 0:
         al_ress.append(-1)
         st_ress.append(-1)
+        print(current_img_index, "invalid")
         current_img_index += 1
         if current_img_index == img_num:
             return
+    print(current_img_index)
     label1.configure(image=st_tkimgs[current_img_index])
     label2.configure(image=al_tkimgs[current_img_index])
 
@@ -164,11 +199,47 @@ def button6_click():
     if current_img_index != img_num:
         return
 
-    makedirs(join(imgDir_path, res_path), exist_ok=True)
-    np.save(join(imgDir_path, res_path, kvs.al_result_resName), al_ress)
-    np.save(join(imgDir_path, res_path, kvs.st_result_resName), st_ress)
+    makedirs(join(imgs_path, correct_result_dir), exist_ok=True)
+    np.save(join(imgs_path, correct_result_dir, correct_al_result_file), al_ress)
+    np.save(join(imgs_path, correct_result_dir, correct_st_result_file), st_ress)
 
     current_dir_index += 1
+
+
+def button7_click():
+    global current_dir_index
+    if current_img_index == img_num:
+        return
+    _res_path = join(ananlyze_result_dir, "correct_example")
+    makedirs(_res_path, exist_ok=True)
+    _site_res_path = join(ananlyze_result_dir, "correct_example", site_img_dir)
+    makedirs(_site_res_path, exist_ok=True)
+
+    index = 0
+    for i, file in enumerate(listdir(_res_path)):
+        if isdir(join(_res_path), file):
+            continue
+        index = i + 1
+    cv2.imwrite(join(_res_path, f"{index:04}.jpg"), origin_imgs[current_img_index])
+    cv2.imwrite(join(_site_res_path, f"{index:04}.jpg"), st_imgs[current_img_index])
+    print(f"{index:04}.jpg")
+
+
+def on_key_press(event):
+    if event.char == "a":
+        button1_click()
+    if event.char == "s":
+        button6_click()
+    if event.char == "q":
+        button2_click()
+    if event.char == "w":
+        button3_click()
+    if event.char == "e":
+        button4_click()
+    if event.char == "r":
+        button5_click()
+    if event.char == "d":
+        button7_click()
 
 
 # 创建UI
@@ -177,16 +248,18 @@ label1 = tk.Label(window)
 label2 = tk.Label(window)
 label1.pack(side=tk.LEFT)
 label2.pack(side=tk.LEFT)
-button1 = tk.Button(window, text="执行下一批次", command=button1_click)
-button2 = tk.Button(window, text="都对", command=button2_click)
-button3 = tk.Button(window, text="算法对", command=button3_click)
-button4 = tk.Button(window, text="站点对", command=button4_click)
-button5 = tk.Button(window, text="全错", command=button5_click)
-button6 = tk.Button(window, text="结果保存", command=button6_click)
+button1 = tk.Button(window, text="a:执行下一批次", command=button1_click)
+button2 = tk.Button(window, text="q:都对", command=button2_click)
+button3 = tk.Button(window, text="w:算法对", command=button3_click)
+button4 = tk.Button(window, text="e:站点对", command=button4_click)
+button5 = tk.Button(window, text="r:全错", command=button5_click)
+button6 = tk.Button(window, text="s:结果保存", command=button6_click)
+button7 = tk.Button(window, text="d:收藏", command=button7_click)
 button1.pack()
 button2.pack()
 button3.pack()
 button4.pack()
 button5.pack()
 button6.pack()
+window.bind("<KeyPress>", on_key_press)
 window.mainloop()

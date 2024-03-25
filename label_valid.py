@@ -38,16 +38,29 @@ def button1_click():
     # 初始化变量
     global imgs_path
     global current_dir_index
+
+    if current_dir_index == len(path_list):
+        print(f"not imgs more!")
+        return
+
     imgs_path = path_list[current_dir_index]
     while 1:
         # 检查是否计算以及是否已经标注
         if not exists(join(imgs_path, stiv_result_dir)):
             print(f"{imgs_path} not exists stiv_result")
             current_dir_index += 1
+            if current_dir_index == len(path_list):
+                print(f"not imgs more!")
+                return
+            imgs_path = path_list[current_dir_index]
             continue
         if exists(join(imgs_path, valid_result_dir, valid_label_file)):
             print(f"{imgs_path} exists valid_label")
             current_dir_index += 1
+            if current_dir_index == len(path_list):
+                print(f"not imgs more!")
+                return
+            imgs_path = path_list[current_dir_index]
             continue
         break
     print(imgs_path)
@@ -147,6 +160,7 @@ def button5_click():
     if current_img_index == img_num:
         return
     _res_path = join(ananlyze_result_dir, "valid_example")
+    makedirs(_res_path, exist_ok=True)
     index = 0
     for i, _ in enumerate(listdir(_res_path)):
         index = i + 1
@@ -163,7 +177,7 @@ def on_key_press(event):
         button2_click()
     if event.char == "w":
         button3_click()
-    if event.char == "e":
+    if event.char == "d":
         button5_click()
 
 
@@ -174,7 +188,7 @@ button1 = tk.Button(window, text="a:执行下一批次", command=button1_click)
 button2 = tk.Button(window, text="q:无效", command=button2_click)
 button3 = tk.Button(window, text="w:有效", command=button3_click)
 button4 = tk.Button(window, text="s:结果保存", command=button4_click)
-button5 = tk.Button(window, text="e:收藏", command=button5_click)
+button5 = tk.Button(window, text="d:收藏", command=button5_click)
 
 label1.pack(side=tk.LEFT)
 label2.pack(side=tk.LEFT)

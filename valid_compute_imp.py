@@ -7,7 +7,7 @@ import numpy as np
 
 valid_score_dir = "valid_score"
 valid_result_dir = "valid_result"
-valid_label_file = "result.npy"
+valid_label_file = "result3.npy"
 
 
 def v1_list_score(imgs_path, current_img_index):
@@ -66,10 +66,10 @@ def nn_ifftimg_result(imgs_path, current_img_index):
 
 valid_score_methods = [
     v1_list_score,
-    signal_peek_value_list_score,
     signal_noise_radio_list_score,
-    nn_ifftimg_result,
+    signal_peek_value_list_score,
     svm_list_result,
+    nn_ifftimg_result,
 ]
 
 

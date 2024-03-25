@@ -135,7 +135,10 @@ def imgCrop(image, rangedivR=10):
     mask = np.zeros((h, w), dtype=np.uint8)
     # mask[y1:y2, x1:x2] = 255
     mask[center_y:y2, x1:center_x] = 255
+    mask[center_y : y2 - l // 4, center_x : x2 - l // 4] = 255
     mask[y1:center_y, center_x:x2] = 255
+    mask[y1 + l // 4 : center_y, x1 + l // 4 : center_x] = 255
+
     # 将图像与掩膜相乘，将正方形之外的像素置为 0
     result = cv2.bitwise_and(image, image, mask=mask)
 
@@ -148,8 +151,8 @@ class STIV:
         self.proDatas = {}
 
     def sti2angle_IFFT(self, img):
-        # 消除不同位置的竖直亮度差异。可以改进的地方为以突变边界消除（即50像素）
-        # 作用：可以突出高亮度区域将低亮度区域的特征淹没了
+
+        # 消除不同位置的竖直亮度差异。
         img_std = std_filter(img.copy())
 
         # 提取倾斜特征，使得fft的特征更明显，同时也是归一化

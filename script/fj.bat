@@ -1,0 +1,1 @@
+PowerShell C:\BaseDir\code\flood\script\download.ps1 -locName fj

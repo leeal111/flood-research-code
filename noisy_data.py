@@ -82,7 +82,7 @@ def test_add_noise():
 
 
 if __name__ == "__main__":
-    src_root = root
+    src_root = "data_base"
     generate_noisy_dataset(src_root, "data_white_noise", noisy_method=add_white_noise)
     generate_noisy_dataset(
         src_root, "data_gaussian_noise", noisy_method=add_gaussian_noise

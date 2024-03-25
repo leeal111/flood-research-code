@@ -8,7 +8,7 @@ from os.path import join, dirname, splitext, basename, exists, isdir
 from display import add_angle_img
 from stiv import STIV
 
-root = "data_gaussian_noise"
+root = "data_base"  # data_gaussian_noise data_base
 stiv_method_name = "sotabase"
 stiv_result_dir = "result" + ("_" if stiv_method_name != "" else "") + stiv_method_name
 ifft_res_dir = join(stiv_result_dir, "0_09_IFFTRES")
@@ -16,6 +16,7 @@ sti_res_dir = join(stiv_result_dir, "0_10_STIRES")
 img_dir = join(stiv_result_dir, "0_00_ORIGIN")
 sum_data_dir = join(stiv_result_dir, "1_00_sumlist")
 ifft_img_dir = join(stiv_result_dir, "0_06_ifft")
+site_img_dir = "hwMot"
 
 
 def imgs_if_R2L(imgs_path):
@@ -38,6 +39,8 @@ def imgs_if_R2L(imgs_path):
             return True
         elif dir1 == "yc":
             return False
+        elif dir1 == "hd":
+            return True
 
         if imgs_path == dirname(imgs_path):
             print(f"{imgs_path_}: unknown ifRightToLeft ")
@@ -121,7 +124,7 @@ def imgs_test(imgs_path, if_R2L):
 
 
 def imgs_test_with_speed(imgs_path, if_R2L):
-    if not exists(join(imgs_path, "hwMot", "flow_speed_evaluation_result.csv")):
+    if not exists(join(imgs_path, site_img_dir, "flow_speed_evaluation_result.csv")):
         imgs_test(imgs_path, if_R2L)
         return
 
@@ -141,7 +144,7 @@ def imgs_test_with_speed(imgs_path, if_R2L):
     makedirs(res_path)
 
     df = (
-        pd.read_csv(join(imgs_path, "hwMot", "flow_speed_evaluation_result.csv"))
+        pd.read_csv(join(imgs_path, site_img_dir, "flow_speed_evaluation_result.csv"))
         .dropna()
         .tail(len(imgs))
     )
@@ -179,10 +182,10 @@ def imgs_test_with_speed(imgs_path, if_R2L):
 
     data = [length, realress, realSpeed, ress, speed]
 
-    if exists(join(imgs_path, "hwMot", "st_ress.txt")):
+    if exists(join(imgs_path, site_img_dir, "st_ress.txt")):
         print("and site_ress")
         st_ress = []
-        with open(join(imgs_path, "hwMot", "st_ress.txt"), "r") as f:
+        with open(join(imgs_path, site_img_dir, "st_ress.txt"), "r") as f:
             for line in f.readlines():
                 st_ress.append(float(line.strip()))
         st_ress = [90 - x if x < 90 else x - 90 for x in st_ress]
@@ -233,16 +236,16 @@ def stiv_row_call(imgs_path):
         return
 
     makedirs(join(imgs_path, "cop"))
-    makedirs(join(imgs_path, "hwMot"), exist_ok=True)
+    makedirs(join(imgs_path, site_img_dir), exist_ok=True)
     for file in listdir(imgs_path):
-        if file == "cop" or file == "hwMot":
+        if file == "cop" or file == site_img_dir:
             continue
         fileName = join(imgs_path, file)
         copyName = join(imgs_path, "cop", file)
         if file.startswith("STI_MOT") or file == "flow_speed_evaluation_result.csv":
             shutil.move(
                 src=fileName,
-                dst=join(imgs_path, "hwMot", file),
+                dst=join(imgs_path, site_img_dir, file),
             )
             continue
         if file.startswith("sti") or isdir(join(imgs_path, file)):
@@ -250,17 +253,21 @@ def stiv_row_call(imgs_path):
         shutil.move(src=fileName, dst=copyName)
 
     reindex_file("sti", imgs_path)
-    reindex_file("STI_MOT", join(imgs_path, "hwMot"))
+    reindex_file("STI_MOT", join(imgs_path, site_img_dir))
 
 
 def stiv_compute_call(imgs_path):
-    if stiv_result_dir in listdir(imgs_path):
-        return
+    # if stiv_result_dir in listdir(imgs_path):
+    #     return
     imgs_test_with_speed(imgs_path, imgs_if_R2L(imgs_path))
 
 
-def stiv_del_call(imgs_path):
-    del_path = join(imgs_path, "valid_score", "v2_list_score.npy")
+def stiv_del_call(imgs_path, **kwarg):
+    if kwarg["del_path"] == "" or kwarg["del_path"] == None:
+        del_dir = "sheild"
+    else:
+        del_dir = kwarg["del_path"]
+    del_path = join(imgs_path, del_dir)
     shutil.rmtree(
         del_path,
         ignore_errors=True,

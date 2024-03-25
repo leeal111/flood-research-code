@@ -1,4 +1,5 @@
 from os import listdir
+import os
 from os.path import join
 import cv2
 import numpy as np
@@ -81,3 +82,13 @@ def compute_f1_score(ans, pre):
 
 def compute_mean_precision(ans, score):
     return average_precision_score(ans, score)
+
+
+if __name__ == "__main__":
+    print(
+        np.load(
+            os.path.normpath(
+                r"data\data_base\fj\202311091243\correct_result\al_result.npy"
+            )
+        )
+    )
