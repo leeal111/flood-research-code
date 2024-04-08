@@ -11,7 +11,7 @@ valid_label_file = "result.npy"
 
 
 def v1_list_score(imgs_path, current_img_index):
-    _list_path = join(imgs_path, sum_data_dir, f"{current_img_index:04}.npy")
+    _list_path = 
     sum_list = np.load(_list_path)
     # 计算峰值比例
     sum_list = sum_list / np.max(sum_list)

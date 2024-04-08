@@ -6,17 +6,20 @@ import cv2
 from PIL import Image, ImageTk
 
 from utils import get_imgs_paths
-from stiv_compute_routine_imp import (
-    root,
+from values import (
     stiv_result_dir,
     ifft_res_dir,
     sti_res_dir,
     img_dir,
+    valid_result_dir,
+    valid_label_file,
+    ananlyze_result_dir,
+    valid_example_dir,
 )
-from ananlyze_routine_imp import ananlyze_result_dir
-from valid_compute_imp import valid_result_dir, valid_label_file
 
-path_list = get_imgs_paths(root)  # [normpath(r"C:\BaseDir\code\20231201_084309")]  #
+root = normpath(r"test\stiv_routine\root")
+
+path_list = get_imgs_paths(root)
 
 st_path = ifft_res_dir
 al_path = sti_res_dir
@@ -119,7 +122,7 @@ def button1_click():
 def nextImg():
     global current_img_index
     current_img_index += 1
-    print(current_img_index)
+    print(f"img {current_img_index}")
     if current_img_index == img_num:
         return
 
@@ -159,13 +162,13 @@ def button5_click():
     global current_dir_index
     if current_img_index == img_num:
         return
-    _res_path = join(ananlyze_result_dir, "valid_example")
+    _res_path = join(ananlyze_result_dir, valid_example_dir)
     makedirs(_res_path, exist_ok=True)
     index = 0
     for i, _ in enumerate(listdir(_res_path)):
         index = i + 1
     cv2.imwrite(join(_res_path, f"{index:04}.jpg"), origin_imgs[current_img_index])
-    print(f"{index:04}.jpg")
+    print(f"img {current_img_index} save to valid_example {index:04}.jpg")
 
 
 def on_key_press(event):

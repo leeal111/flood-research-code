@@ -1,38 +1,27 @@
 import tkinter as tk
 import cv2
-from os.path import join, exists, isdir
+from os.path import join, exists, isdir, normpath
 from os import listdir, makedirs
 from PIL import Image, ImageTk
 import numpy as np
-from ananlyze_routine_imp import ananlyze_result_dir
-
-correct_result_dir = "correct_result"
-correct_al_result_file = "al_result.npy"
-correct_st_result_file = "st_result.npy"
-
-from stiv_compute_routine_imp import (
-    imgs_if_R2L,
+from values import (
+    ananlyze_result_dir,
+    correct_result_dir,
+    correct_al_result_file,
+    correct_st_result_file,
     stiv_result_dir,
-    site_img_dir,
+    hw_img_dir,
     sti_res_dir,
-    root,
-)
-from utils import get_imgs_paths
-from valid_compute_imp import (
     valid_label_file,
     img_dir,
     valid_result_dir,
-    valid_score_methods,
+    correct_example_dir,
 )
+from utils import get_imgs_paths, imgs_if_R2L
 
+root = normpath(r"test\stiv_routine\root")
 
-def ifFlip(img, path):
-    if imgs_if_R2L(path):
-        return cv2.flip(img, 1)
-    else:
-        return img
-    
-st_path = site_img_dir
+st_path = hw_img_dir
 al_path = sti_res_dir
 or_path = img_dir
 valid_result_path = join(valid_result_dir, valid_label_file)
@@ -65,16 +54,10 @@ def button1_click():
     imgs_path = path_list[current_dir_index]
     while 1:
         # 检查是否计算以及是否已经标注
-        if not exists(join(imgs_path, stiv_result_dir)):
-            print(f"{imgs_path} not exists stiv_result")
-            current_dir_index += 1
-            if current_dir_index == len(path_list):
-                print(f"not imgs more!")
-                return
-            imgs_path = path_list[current_dir_index]
-            continue
-        if exists(join(imgs_path, correct_result_dir, correct_al_result_file)):
-            print(f"{imgs_path} exists al_result")
+        if (not exists(join(imgs_path, stiv_result_dir))) or (
+            exists(join(imgs_path, correct_result_dir, correct_al_result_file))
+        ):
+            print(f"{imgs_path} not exists stiv_result or exists al_result")
             current_dir_index += 1
             if current_dir_index == len(path_list):
                 print(f"not imgs more!")
@@ -119,7 +102,9 @@ def button1_click():
     for file in listdir(_st_path):
         if not file.endswith(".jpg"):
             continue
-        img = ifFlip(cv2.imread(join(_st_path, file)), imgs_path)
+        img = cv2.imread(join(_st_path, file))
+        if imgs_if_R2L(imgs_path):
+            img = cv2.flip(img, 1)
         st_imgs.append(img.copy())
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         img = Image.fromarray(img)
@@ -135,7 +120,10 @@ def button1_click():
     img_num = len(st_tkimgs)
     al_ress = []
     st_ress = []
-    valid_data = np.load(join(imgs_path, valid_result_path))
+    if exists(join(imgs_path, valid_result_path)):
+        valid_data = np.load(join(imgs_path, valid_result_path))
+    else:
+        valid_data = np.array([1 for _ in range(img_num)])
     nextImg()
 
 
@@ -147,11 +135,11 @@ def nextImg():
     while valid_data[current_img_index] == 0:
         al_ress.append(-1)
         st_ress.append(-1)
-        print(current_img_index, "invalid")
+        print(f"img {current_img_index} invalid")
         current_img_index += 1
         if current_img_index == img_num:
             return
-    print(current_img_index)
+    print(f"img {current_img_index}")
     label1.configure(image=st_tkimgs[current_img_index])
     label2.configure(image=al_tkimgs[current_img_index])
 
@@ -205,9 +193,9 @@ def button7_click():
     global current_dir_index
     if current_img_index == img_num:
         return
-    _res_path = join(ananlyze_result_dir, "correct_example")
+    _res_path = join(ananlyze_result_dir, correct_example_dir)
     makedirs(_res_path, exist_ok=True)
-    _site_res_path = join(ananlyze_result_dir, "correct_example", site_img_dir)
+    _site_res_path = join(_res_path, hw_img_dir)
     makedirs(_site_res_path, exist_ok=True)
 
     index = 0
@@ -218,6 +206,14 @@ def button7_click():
     cv2.imwrite(join(_res_path, f"{index:04}.jpg"), origin_imgs[current_img_index])
     cv2.imwrite(join(_site_res_path, f"{index:04}.jpg"), st_imgs[current_img_index])
     print(f"{index:04}.jpg")
+
+
+def button8_click():
+    if current_img_index == img_num:
+        return
+    al_ress.append(-1)
+    st_ress.append(-1)
+    nextImg()
 
 
 def on_key_press(event):
@@ -235,6 +231,8 @@ def on_key_press(event):
         button5_click()
     if event.char == "d":
         button7_click()
+    if event.char == "t":
+        button8_click()
 
 
 # 创建UI
@@ -250,11 +248,13 @@ button4 = tk.Button(window, text="e:站点对", command=button4_click)
 button5 = tk.Button(window, text="r:全错", command=button5_click)
 button6 = tk.Button(window, text="s:结果保存", command=button6_click)
 button7 = tk.Button(window, text="d:收藏", command=button7_click)
+button8 = tk.Button(window, text="t:无效", command=button8_click)
 button1.pack()
 button2.pack()
 button3.pack()
 button4.pack()
 button5.pack()
+button8.pack()
 button6.pack()
 window.bind("<KeyPress>", on_key_press)
 window.mainloop()

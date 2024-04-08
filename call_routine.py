@@ -1,13 +1,13 @@
 from os.path import normpath
 from stiv_routine_imp import stiv_call
 from utils import call_for_imgss, get_imgs_paths, imgss_del_call
-
+from valid_routine_imp_copy import valid_call
 
 # 配置参数
 test_mode = 2  # 0:img 1:imgs 2:imgss
-call_func = stiv_call[test_mode]  # imgss_del_call
+call_func = valid_call[test_mode]  # imgss_del_call
 img_path = normpath(r"test\stiv\sti007.jpg")
-imgs_path = normpath(r"test\stiv_routine\20240327_133648")
+imgs_path = normpath(r"test\stiv_routine\20240115_131849")
 imgss_path = normpath(r"test\stiv_routine\root")
 
 ##############################################

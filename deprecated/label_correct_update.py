@@ -1,43 +1,32 @@
 import tkinter as tk
 import cv2
-from os.path import join, exists, isdir
+from os.path import join, exists, isdir, normpath
 from os import listdir, makedirs
 from PIL import Image, ImageTk
 import numpy as np
-from ananlyze_routine_imp import ananlyze_result_dir
-
-correct_result_dir = "correct_result"
-correct_al_result_file = "al_result.npy"
-correct_st_result_file = "st_result.npy"
-correct_al_result_file_u = "al_result_u.npy"
-correct_st_result_file_u = "st_result_u.npy"
-
-from stiv_compute_routine_imp import (
-    imgs_if_R2L,
+from values import (
+    ananlyze_result_dir,
+    correct_result_dir,
+    correct_al_result_file,
+    correct_st_result_file,
+    correct_al_result_file_u,
+    correct_st_result_file_u,
     stiv_result_dir,
-    site_img_dir,
+    hw_img_dir,
     sti_res_dir,
-    root,
-)
-from utils import get_imgs_paths
-from valid_compute_imp import (
     valid_label_file,
     img_dir,
     valid_result_dir,
-    valid_score_methods,
 )
 
-def ifFlip(img, path):
-    if imgs_if_R2L(path):
-        return cv2.flip(img, 1)
-    else:
-        return img
-    
-st_path = site_img_dir
+from utils import get_imgs_paths, imgs_if_R2L
+
+root = normpath(r"test\stiv_routine\root")
+st_path = hw_img_dir
 al_path = sti_res_dir
 or_path = img_dir
 valid_result_path = join(valid_result_dir, valid_label_file)
-valid_result_path_u=join(valid_result_dir, f"signal_noise_radio_list_score.npy")
+valid_result_path_u = join(valid_result_dir, f"signal_noise_radio_list_score.npy")
 path_list = get_imgs_paths(root)
 
 current_dir_index = 0
@@ -54,7 +43,8 @@ al_ress_u = []
 st_ress_u = []
 valid_result = []
 origin_imgs = []
-valid_data_u =[]
+valid_data_u = []
+
 
 def button1_click():
     # 初始化变量
@@ -122,7 +112,9 @@ def button1_click():
     for file in listdir(_st_path):
         if not file.endswith(".jpg"):
             continue
-        img = ifFlip(cv2.imread(join(_st_path, file)), imgs_path)
+        img = cv2.imread(join(_st_path, file))
+        if imgs_if_R2L(imgs_path):
+            img = cv2.flip(img, 1)
         st_imgs.append(img.copy())
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         img = Image.fromarray(img)
@@ -143,8 +135,8 @@ def button1_click():
     st_ress_u = []
     valid_data = np.load(join(imgs_path, valid_result_path))
     valid_data_u = np.load(join(imgs_path, valid_result_path_u))
-    al_ress=np.load(join(imgs_path, correct_result_dir,correct_al_result_file))
-    st_ress=np.load(join(imgs_path, correct_result_dir,correct_st_result_file))
+    al_ress = np.load(join(imgs_path, correct_result_dir, correct_al_result_file))
+    st_ress = np.load(join(imgs_path, correct_result_dir, correct_st_result_file))
     print(valid_data)
     print(valid_data_u)
     print(al_ress)
@@ -166,7 +158,7 @@ def nextImg():
             al_ress_u.append(-1)
             st_ress_u.append(-1)
             print(current_img_index, "invalid")
-        else :
+        else:
             break
         current_img_index += 1
         if current_img_index == img_num:
@@ -227,7 +219,7 @@ def button7_click():
         return
     _res_path = join(ananlyze_result_dir, "correct_example")
     makedirs(_res_path, exist_ok=True)
-    _site_res_path = join(ananlyze_result_dir, "correct_example", site_img_dir)
+    _site_res_path = join(ananlyze_result_dir, "correct_example", hw_img_dir)
     makedirs(_site_res_path, exist_ok=True)
 
     index = 0

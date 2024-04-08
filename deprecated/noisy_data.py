@@ -5,7 +5,7 @@ import cv2
 import numpy as np
 from utils import call_for_imgss, get_imgs_paths
 from os.path import exists, join, isdir, normpath
-from valid_compute_imp import valid_label_file, valid_result_dir
+from valid_routine_imp import valid_label_file, valid_result_dir
 from stiv_compute_routine_imp import root
 
 

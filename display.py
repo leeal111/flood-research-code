@@ -84,25 +84,12 @@ def add_angle_img(img, angle, central_not_print_num=0):
 
 
 titles = {
-    "v1_list_score": "平稳程度",
-    "signal_peek_value_list_score": "总体能量值",
-    "signal_noise_radio_list_score": "峰值信噪比",
-    "nn_ifftimg_result": "神经网络",
-    "svm_list_result": "支持向量机",
+    "smoothness": "平稳程度",
+    "signal_peek_value": "总体能量值",
+    "signal_noise_radio": "峰值信噪比",
+    "nn": "神经网络",
+    "svm": "支持向量机",
 }
-
-
-def roc_img(name, fpr, tpr, auc_score):
-    fig, ax = plt.subplots(figsize=fig_size)
-    ax.plot(fpr, tpr, label=f"ROC curve (mean precision = {auc_score:0.2f}%)")
-    ax.plot([0, 1], [0, 1], "k--")
-    ax.xlim([0.0, 1.0])
-    ax.ylim([0.0, 1.0])
-    ax.xlabel("假阳率", fontsize=font_size)
-    ax.ylabel("真阳率", fontsize=font_size)
-    ax.title(titles[name], fontsize=font_size)
-    ax.legend(loc="lower right", fontsize=font_size)
-    return plt_fig_img(fig)
 
 
 def pr_img(name, precision, recall, f1_score):

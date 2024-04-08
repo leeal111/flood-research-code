@@ -35,9 +35,9 @@ def img_stiv_call(img_path, if_R2L, *arg, **kwarg):
     )
     makedirs(res_path, exist_ok=True)
     for index, [key, value] in enumerate(stiv.proImgs.items()):
-        cv2.imwrite(join(res_path, f"0_{index:02}-{key}.jpg"), value)
+        cv2.imwrite(join(res_path, f"0_{index:02}_{key}.jpg"), value)
     for index, [key, value] in enumerate(stiv.proDatas.items()):
-        np.save(join(res_path, f"1_{index:02}-{key}.npy"), value)
+        np.save(join(res_path, f"1_{index:02}_{key}.npy"), value)
     print(f"result={res:.1f} score={stiv.score:.2f}  img_path:{img_path}")
 
 
