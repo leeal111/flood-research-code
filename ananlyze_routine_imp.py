@@ -6,7 +6,7 @@ from os.path import join,exists,basename,dirname
 from sklearn.metrics import average_precision_score, precision_recall_curve
 from display import pr_img
 from utils import call_for_imgss, get_imgs_paths,imgs_if_R2L
-from values import valid_label_file,valid_result_dir,valid_score_dir,hw_img_dir,img_dir,ananlyze_result_dir,correct_result_dir,correct_al_result_file,correct_st_result_file
+from values import valid_label_file,valid_result_dir,valid_score_dir,xxx_img_dir,img_dir,ananlyze_result_dir,correct_result_dir,correct_al_result_file,correct_st_result_file
 from valid_routine_imp_copy import sumlist_all,ifftimg_all
 
 valid_score_methods=sumlist_all["method"]+ifftimg_all["method"]
@@ -80,7 +80,7 @@ def ananlyze_correct_wrong_call(imgs_path):
     al_ans = np.load(join(imgs_path, correct_result_dir, correct_al_result_file))
     st_ans = np.load(join(imgs_path, correct_result_dir, correct_st_result_file))
 
-    for i,(img_file,site_file) in enumerate(zip(listdir(join(imgs_path, img_dir)),listdir(join(imgs_path, hw_img_dir)))):
+    for i,(img_file,site_file) in enumerate(zip(listdir(join(imgs_path, img_dir)),listdir(join(imgs_path, xxx_img_dir)))):
         _res_path = None
         if al_ans[i] == 1 and st_ans[i] == 0:
             _res_path = join(
@@ -97,15 +97,15 @@ def ananlyze_correct_wrong_call(imgs_path):
         else :
             continue
         makedirs(_res_path, exist_ok=True)
-        makedirs(join(_res_path,hw_img_dir), exist_ok=True)
+        makedirs(join(_res_path,xxx_img_dir), exist_ok=True)
         shutil.copy(
             join(imgs_path, img_dir, img_file),
             join(_res_path, f"{len(listdir(_res_path))-1:04}.jpg"),
         )
-        site_img=cv2.imread(join(imgs_path, hw_img_dir, site_file))
+        site_img=cv2.imread(join(imgs_path, xxx_img_dir, site_file))
         if imgs_if_R2L(imgs_path):
             site_img=cv2.flip(site_img,1)
-        cv2.imwrite(join(_res_path,hw_img_dir, f"{len(listdir(_res_path))-2:04}.jpg"),site_img)
+        cv2.imwrite(join(_res_path,xxx_img_dir, f"{len(listdir(_res_path))-2:04}.jpg"),site_img)
 
 def ananlyze_correct_result_wrong(root):
     shutil.rmtree(join(ananlyze_result_dir, "correct_wrong"), ignore_errors=True)

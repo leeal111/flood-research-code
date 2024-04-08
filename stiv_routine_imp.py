@@ -10,14 +10,14 @@ from os.path import join, dirname, splitext, basename, normpath, exists, isdir
 from utils import imgs_if_R2L
 from values import (
     stiv_result_dir,
-    hw_img_dir,
-    hw_csv_name,
+    xxx_img_dir,
+    xxx_csv_name,
     stiv_csv_name,
     valid_threshold,
     stiv_real_name,
-    hw_img_prefix,
-    hw_others_dir,
-    hw_mot_prefix,
+    xxx_img_prefix,
+    xxx_others_dir,
+    xxx_mot_prefix,
 )
 
 stiv = STIV()
@@ -103,9 +103,9 @@ def imgs_stiv_call(imgs_path, if_R2L, *arg, **kwarg):
         "有效分数",
         "有效判定",
     ]
-    speed_file_path = join(imgs_path, hw_img_dir, hw_csv_name)
+    speed_file_path = join(imgs_path, xxx_img_dir, xxx_csv_name)
     if exists(speed_file_path):
-        data, header = imgs_stiv_hw_extra(
+        data, header = imgs_stiv_xxx_extra(
             imgs_path, if_R2L, data, header, speed_file_path
         )
     res_excel_path = join(res_path, stiv_csv_name)
@@ -123,7 +123,7 @@ def data2excel(res_excel_path, data, header):
     )
 
 
-def imgs_stiv_hw_extra(imgs_path, if_R2L, data, header, speed_file_path):
+def imgs_stiv_xxx_extra(imgs_path, if_R2L, data, header, speed_file_path):
 
     ress = data[0]
     scores = data[1]
@@ -185,33 +185,33 @@ def imgs_stiv_hw_extra(imgs_path, if_R2L, data, header, speed_file_path):
 
 
 def imgss_stiv_call(imgs_path, *arg, **kwarg):
-    imgs_stiv_hw_preprocess(imgs_path)
+    imgs_stiv_xxx_preprocess(imgs_path)
     imgs_stiv_call(imgs_path, imgs_if_R2L(imgs_path))
 
 
-def imgs_stiv_hw_preprocess(imgs_path):
-    if hw_others_dir in listdir(imgs_path):
+def imgs_stiv_xxx_preprocess(imgs_path):
+    if xxx_others_dir in listdir(imgs_path):
         return
 
-    makedirs(join(imgs_path, hw_others_dir))
-    makedirs(join(imgs_path, hw_img_dir), exist_ok=True)
+    makedirs(join(imgs_path, xxx_others_dir))
+    makedirs(join(imgs_path, xxx_img_dir), exist_ok=True)
     for file in listdir(imgs_path):
-        if file == hw_others_dir or file == hw_img_dir:
+        if file == xxx_others_dir or file == xxx_img_dir:
             continue
         fileName = join(imgs_path, file)
-        copyName = join(imgs_path, hw_others_dir, file)
-        if file.startswith(hw_mot_prefix) or file == hw_csv_name:
+        copyName = join(imgs_path, xxx_others_dir, file)
+        if file.startswith(xxx_mot_prefix) or file == xxx_csv_name:
             shutil.move(
                 src=fileName,
-                dst=join(imgs_path, hw_img_dir, file),
+                dst=join(imgs_path, xxx_img_dir, file),
             )
             continue
-        if file.startswith(hw_img_prefix) or isdir(join(imgs_path, file)):
+        if file.startswith(xxx_img_prefix) or isdir(join(imgs_path, file)):
             continue
         shutil.move(src=fileName, dst=copyName)
 
-    reindex_file(hw_img_prefix, imgs_path)
-    reindex_file(hw_mot_prefix, join(imgs_path, hw_img_dir))
+    reindex_file(xxx_img_prefix, imgs_path)
+    reindex_file(xxx_mot_prefix, join(imgs_path, xxx_img_dir))
 
 
 def reindex_file(prefix, path):

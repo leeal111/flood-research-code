@@ -3,11 +3,11 @@ from os.path import join
 # stiv_routine_imp
 stiv_method_name = "sotabase"
 stiv_result_dir = "result" + ("_" if stiv_method_name != "" else "") + stiv_method_name
-hw_img_dir = "hwMot"
-hw_others_dir = "cop"
-hw_csv_name = "flow_speed_evaluation_result.csv"
-hw_mot_prefix = "STI_MOT"
-hw_img_prefix = "sti"
+xxx_img_dir = "xxxMot"
+xxx_others_dir = "cop"
+xxx_csv_name = "flow_speed_evaluation_result.csv"
+xxx_mot_prefix = "STI_MOT"
+xxx_img_prefix = "sti"
 stiv_csv_name = "stiv_result.xlsx"
 stiv_real_name = "REALRES"
 

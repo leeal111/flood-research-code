@@ -12,7 +12,7 @@ from values import (
     correct_al_result_file_u,
     correct_st_result_file_u,
     stiv_result_dir,
-    hw_img_dir,
+    xxx_img_dir,
     sti_res_dir,
     valid_label_file,
     img_dir,
@@ -22,7 +22,7 @@ from values import (
 from utils import get_imgs_paths, imgs_if_R2L
 
 root = normpath(r"test\stiv_routine\root")
-st_path = hw_img_dir
+st_path = xxx_img_dir
 al_path = sti_res_dir
 or_path = img_dir
 valid_result_path = join(valid_result_dir, valid_label_file)
@@ -219,7 +219,7 @@ def button7_click():
         return
     _res_path = join(ananlyze_result_dir, "correct_example")
     makedirs(_res_path, exist_ok=True)
-    _site_res_path = join(ananlyze_result_dir, "correct_example", hw_img_dir)
+    _site_res_path = join(ananlyze_result_dir, "correct_example", xxx_img_dir)
     makedirs(_site_res_path, exist_ok=True)
 
     index = 0
