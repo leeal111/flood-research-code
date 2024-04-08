@@ -120,6 +120,21 @@ def xycrd2polarcrd(
     return dst
 
 
+def search(img_feature, res, theta, precision):
+    polar = xycrd2polarcrd(
+        img_feature,
+        res,
+        theta,
+        precision,
+        rangeV=1,
+        rangedivR=2.5,
+        central_zero_num=20,
+    )
+    sum_list = np.sum(polar, axis=1)
+    res = (res - theta) + (np.argmax(sum_list) * precision)
+    return res, polar, sum_list
+
+
 class STIV:
     def __init__(self, if_eval=True) -> None:
         self.eval = if_eval
@@ -180,21 +195,10 @@ class STIV:
 
         return img_fe_clr
 
-    def _search(self, img_feature, res, theta, precision):
-        polar = xycrd2polarcrd(
-            img_feature,
-            res,
-            theta,
-            precision,
-            rangeV=1,
-            rangedivR=2.5,
-            central_zero_num=20,
-        )
-        sum_list = np.sum(polar, axis=1)
-        res = (res - theta) + (np.argmax(sum_list) * precision)
-        return res, polar, sum_list
-
     def sti2angle(self, img, if_R2L=False):
+        self.proImgs = {}
+        self.proDatas = {}
+        self.score = None
 
         if len(img.shape) > 2:
             img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
@@ -204,14 +208,15 @@ class STIV:
         fea = self._img_process(img)
 
         ## 开始搜寻结果 ##
-        res, _, sum_list = self._search(fea, res=45, theta=45, precision=1)
+        res, _, sum_list = search(fea, res=45, theta=45, precision=1)
+        self._score(sum_list)
 
         if res < 2:
             res = 2
         if res > 88:
             res = 88
 
-        res, _, _ = self._search(fea, res, theta=2, precision=0.1)
+        res, _, _ = search(fea, res, theta=2, precision=0.1)
 
         result = 90 - res if res <= 90 else res - 90
 
@@ -226,46 +231,49 @@ class STIV:
 
         return result
 
-    def sti2angle_FFT(self, img, if_R2L=False):
+    # def sti2angle_FFT(self, img, if_R2L=False):
+    #     self.proImgs = {}
+    #     self.proDatas = {}
+    #     self.score = None
 
-        if len(img.shape) > 2:
-            img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-        if if_R2L:
-            img = cv2.flip(img, 1)
+    #     if len(img.shape) > 2:
+    #         img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    #     if if_R2L:
+    #         img = cv2.flip(img, 1)
 
-        # img_std = std_filter(img.copy())
+    #     # img_std = std_filter(img.copy())
 
-        # img_clr = part_sobel(img_std.copy(), 1000)
+    #     # img_clr = part_sobel(img_std.copy(), 1000)
 
-        img_fft = abs_FFT_shift(img.copy())
-        img_fe = np.log(img_fft)
-        low_freq_filter(img_fft)
-        low_freq_filter(img_fe)
+    #     img_fft = abs_FFT_shift(img.copy())
+    #     img_fe = np.log(img_fft)
+    #     low_freq_filter(img_fft)
+    #     low_freq_filter(img_fe)
 
-        # img_fft_clr = vertical_delete(img_fft)
+    #     # img_fft_clr = vertical_delete(img_fft)
 
-        res, _, sum_list = self._search(img_fe, res=135, theta=45, precision=1)
-        self.proImgs["sum"] = line_chart_img(sum_list)
-        self.proDatas["sumlist"] = sum_list.copy()
+    #     res, _, sum_list = self._search(img_fe, res=135, theta=45, precision=1)
+    #     self.proImgs["sum"] = line_chart_img(sum_list)
+    #     self.proDatas["sumlist"] = sum_list.copy()
 
-        if res < 92:
-            res = 92
-        if res > 178:
-            res = 178
+    #     if res < 92:
+    #         res = 92
+    #     if res > 178:
+    #         res = 178
 
-        res, _, _ = self._search(img_fe, res=135, theta=2, precision=0.1)
+    #     res, _, _ = self._search(img_fe, res=135, theta=2, precision=0.1)
 
-        result = res if res <= 90 else 180 - res
-        if self.eval:
-            # self.proImgs["std"] =  normalize_img(img_std)
-            # self.proImgs["clr"] =  normalize_img(img_clr)
-            self.proImgs["fft"] = normalize_img(img_fft)
-            # self.proImgs["fftclr"] =  normalize_img(img_fft_clr)
-            self.proImgs["fea"] = normalize_img(img_fe)
-            self.proImgs["sum"] = line_chart_img(sum_list)
-            self.proImgs["FFTRES"] = add_angle_img(self.proImgs["fea"], -result, 200)
+    #     result = res if res <= 90 else 180 - res
+    #     if self.eval:
+    #         # self.proImgs["std"] =  normalize_img(img_std)
+    #         # self.proImgs["clr"] =  normalize_img(img_clr)
+    #         self.proImgs["fft"] = normalize_img(img_fft)
+    #         # self.proImgs["fftclr"] =  normalize_img(img_fft_clr)
+    #         self.proImgs["fea"] = normalize_img(img_fe)
+    #         self.proImgs["sum"] = line_chart_img(sum_list)
+    #         self.proImgs["FFTRES"] = add_angle_img(self.proImgs["fea"], -result, 200)
 
-        return result
+    #     return result
 
 
 if __name__ == "__main__":
