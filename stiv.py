@@ -6,24 +6,13 @@ from display import *
 
 
 def std_filter(sti):
-    # USage：
-    # in ------
-    #   sti: 原始的sti，元素为cv2格式图片
-    # out -----
-    #   sti: 经过标准滤波的sti
     return (sti - np.mean(sti, axis=0)) / (np.std(sti, axis=0) + 1e-8)
 
 
 def xycrd2polarcrd(
     img, res=45, theta=45, precision=1, rangeV=0, rangedivR=2, zeroNum=0
 ):
-    # USage：
-    # in ------
-    #   img: 直角坐标fft图
-    # out -----
-    #   dst: 极坐标fft图
-
-    # (res-theta)+(np.argmax(sum_list)*precision)
+    # 最终结果计算(res-theta)+(np.argmax(sum_list)*precision)
     maxr = int(min(img.shape) / rangedivR)
     # maxr = 100 if maxr > 100 else maxr
     maxa = int(2 * theta / precision)
@@ -133,11 +122,11 @@ def imgCrop(image, rangedivR=10):
 
     # 创建剪裁掩膜
     mask = np.zeros((h, w), dtype=np.uint8)
-    # mask[y1:y2, x1:x2] = 255
-    mask[center_y:y2, x1:center_x] = 255
-    mask[center_y : y2 - l // 4, center_x : x2 - l // 4] = 255
-    mask[y1:center_y, center_x:x2] = 255
-    mask[y1 + l // 4 : center_y, x1 + l // 4 : center_x] = 255
+    mask[y1:y2, x1:x2] = 255
+    # mask[center_y:y2, x1:center_x] = 255
+    # mask[center_y : y2 - l // 4, center_x : x2 - l // 4] = 255
+    # mask[y1:center_y, center_x:x2] = 255
+    # mask[y1 + l // 4 : center_y, x1 + l // 4 : center_x] = 255
 
     # 将图像与掩膜相乘，将正方形之外的像素置为 0
     result = cv2.bitwise_and(image, image, mask=mask)
@@ -149,6 +138,21 @@ class STIV:
     def __init__(self) -> None:
         self.proImgs = {}
         self.proDatas = {}
+        self.score = -1
+
+    def _list2score(self,sum_list, range_len=5):
+        max_index = np.argmax(sum_list)
+        total = np.max(sum_list)
+        for i in range(range_len):
+            i += 1
+            index = max_index - i if max_index - i >= 0 else 0
+            total += sum_list[index]
+            index = (
+                max_index + i if max_index + i < len(sum_list) else len(sum_list) - 1
+            )
+            total += sum_list[index]
+
+        return total / np.sum(sum_list)
 
     def sti2angle_IFFT(self, img):
 
@@ -182,6 +186,7 @@ class STIV:
         img_fe_ = img_fe_clr
         polar = xycrd2polarcrd(img_fe_, rangeV=1, rangedivR=2.5, zeroNum=20)
         sum_list = np.sum(polar, axis=1)
+        self.score = self._list2score(sum_list)
         res = np.argmax(sum_list)
 
         if res < 2:

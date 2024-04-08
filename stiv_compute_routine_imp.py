@@ -41,6 +41,8 @@ def imgs_if_R2L(imgs_path):
             return False
         elif dir1 == "hd":
             return True
+        elif dir1 == "ys":
+            return True
 
         if imgs_path == dirname(imgs_path):
             print(f"{imgs_path_}: unknown ifRightToLeft ")
@@ -123,12 +125,13 @@ def imgs_test(imgs_path, if_R2L):
             np.save(rPath, value)
 
 
-def imgs_test_with_speed(imgs_path, if_R2L):
+def imgs_test_with_speed(imgs_path, if_R2L, if_use_score=False):
     if not exists(join(imgs_path, site_img_dir, "flow_speed_evaluation_result.csv")):
-        imgs_test(imgs_path, if_R2L)
+        # imgs_test(imgs_path, if_R2L)
         return
 
-    print(imgs_path + " with speed", end=" ")
+    print(imgs_path + " with speed", end=" \n")
+    return
     imgs = []
     for file in listdir(imgs_path):
         if not file.endswith(".jpg"):
@@ -157,10 +160,14 @@ def imgs_test_with_speed(imgs_path, if_R2L):
     ]
 
     ress = []
+    scores = []
+
     for i, img in enumerate(imgs):
         img = flip_img(img, if_R2L)
-        res, proImgs, proDatas = STIV().sti2angle(img)
+        stiv = STIV()
+        res, proImgs, proDatas = stiv.sti2angle(img)
         ress.append(res)
+        scores.append(stiv.score)
 
         proImgs["realRES"] = add_angle_img(proImgs["ORIGIN"], 90 - realress[i])
         if i == 0:
@@ -179,7 +186,9 @@ def imgs_test_with_speed(imgs_path, if_R2L):
         math.tan(ress[i] / 180 * math.pi) * 25 * length[i] / 750
         for i in range(len(ress))
     ]
-
+    if if_use_score:
+        scores = np.where(np.array(scores) < 0.3, 0, 1)
+        speed = interpolate_speed(speed, scores)
     data = [length, realress, realSpeed, ress, speed]
 
     if exists(join(imgs_path, site_img_dir, "st_ress.txt")):
@@ -222,12 +231,28 @@ def imgs_test_with_speed(imgs_path, if_R2L):
         )
     else:
         print("")
+        relative_error = [
+            (abs(realSpeed[i] - speed[i])) * 100 for i in range(len(speed))
+        ]
+        error_mean = np.array(relative_error).mean()
+        relative_error.append(error_mean)
+        with open("test.txt", "w") as f:
+            if error_mean < 5:
+                f.write(f"{imgs_path}: {error_mean}")
+        data.append(relative_error)    
         df_save = pd.DataFrame(data)
         df_save = df_save.T
         df_save.to_excel(
             join(res_path, "speed_result.xlsx"),
             index=False,
-            header=["真实长度", "真值角度", "真值速度", "算法角度", "算法速度"],
+            header=[
+                "真实长度",
+                "真值角度",
+                "真值速度",
+                "算法角度",
+                "算法速度",
+                "相对差值(cm/s)",
+            ],
         )
 
 
@@ -259,7 +284,7 @@ def stiv_row_call(imgs_path):
 def stiv_compute_call(imgs_path):
     # if stiv_result_dir in listdir(imgs_path):
     #     return
-    imgs_test_with_speed(imgs_path, imgs_if_R2L(imgs_path))
+    imgs_test_with_speed(imgs_path, imgs_if_R2L(imgs_path), if_use_score=True)
 
 
 def stiv_del_call(imgs_path, **kwarg):
@@ -274,3 +299,27 @@ def stiv_del_call(imgs_path, **kwarg):
     )
     if exists(del_path):
         remove(del_path)
+
+
+def interpolate_speed(speed, validity):
+    new_speed = []
+    temp = []
+    last_s = 0
+    for i, s in enumerate(speed):
+        if validity[i] == 1:
+            if len(temp) != 0:
+                l = len(temp)
+                for j in range(l):
+                    new_speed.append(s * (j + 1) / (l + 1) + last_s * (l - j) / (l + 1))
+                temp = []
+            new_speed.append(s)
+            last_s = s
+        else:
+            temp.append(1)
+    if len(temp) != 0:
+        l = len(temp)
+        for j in range(l):
+            new_speed.append(0 * (j + 1) / (l + 1) + last_s * (l - j) / (l + 1))
+        temp = []
+
+    return new_speed

@@ -7,7 +7,7 @@ call_for_imgss(path_list, valid_score_call)
 
 valid_thos = [
     0.7,
-    0.5,
+    0.27,
     23,
     0.5,
     0.5,

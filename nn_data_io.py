@@ -26,29 +26,29 @@ def label_out_call(imgs_path, **kwarg):
 
 
 def data_out(path_list):
-    datas = call_for_imgss(
-        path_list,
-        data_out_call,
-        data_path=ifft_img_dir,
-    )
-    datas = np.concatenate(datas)
-    sumlists = call_for_imgss(
-        path_list,
-        data_out_call,
-        data_path=sum_data_dir,
-    )
-    sumlists = np.concatenate(sumlists)
+    # datas = call_for_imgss(
+    #     path_list,
+    #     data_out_call,
+    #     data_path=ifft_img_dir,
+    # )
+    # datas = np.concatenate(datas)
+    # sumlists = call_for_imgss(
+    #     path_list,
+    #     data_out_call,
+    #     data_path=sum_data_dir,
+    # )
+    # sumlists = np.concatenate(sumlists)
     labels = call_for_imgss(path_list, label_out_call)
     labels = np.concatenate(labels)
 
-    print(f"数据数：{len(datas)}")
-    print(f"标注数据数：{len(labels)}")
+    # print(f"数据数：{len(datas)}")
+    # print(f"标注数据数：{len(sumlists)}")
     print(f"正数据数：{np.sum(np.array(labels)==1)}")
     print(f"负数据数：{np.sum(np.array(labels)==0)}")
     makedirs(data_save_path, exist_ok=True)
-    np.save(join(data_save_path, "datas.npy"), np.array(datas))
+    # np.save(join(data_save_path, "datas.npy"), np.array(datas))
     np.save(join(data_save_path, "labels.npy"), np.array(labels))
-    np.save(join(data_save_path, "sumlists.npy"), np.array(sumlists))
+    # np.save(join(data_save_path, "sumlists.npy"), np.array(sumlists))
 
 
 def data_in(path_list):

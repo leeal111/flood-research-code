@@ -7,7 +7,7 @@ import numpy as np
 
 valid_score_dir = "valid_score"
 valid_result_dir = "valid_result"
-valid_label_file = "result3.npy"
+valid_label_file = "result.npy"
 
 
 def v1_list_score(imgs_path, current_img_index):

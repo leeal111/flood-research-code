@@ -9,6 +9,8 @@ from ananlyze_routine_imp import ananlyze_result_dir
 correct_result_dir = "correct_result"
 correct_al_result_file = "al_result.npy"
 correct_st_result_file = "st_result.npy"
+correct_al_result_file_u = "al_result_u.npy"
+correct_st_result_file_u = "st_result_u.npy"
 
 from stiv_compute_routine_imp import (
     imgs_if_R2L,
@@ -25,7 +27,6 @@ from valid_compute_imp import (
     valid_score_methods,
 )
 
-
 def ifFlip(img, path):
     if imgs_if_R2L(path):
         return cv2.flip(img, 1)
@@ -36,7 +37,7 @@ st_path = site_img_dir
 al_path = sti_res_dir
 or_path = img_dir
 valid_result_path = join(valid_result_dir, valid_label_file)
-
+valid_result_path_u=join(valid_result_dir, f"signal_noise_radio_list_score.npy")
 path_list = get_imgs_paths(root)
 
 current_dir_index = 0
@@ -49,9 +50,11 @@ current_img_index = 0
 img_num = 0
 al_ress = []
 st_ress = []
+al_ress_u = []
+st_ress_u = []
 valid_result = []
 origin_imgs = []
-
+valid_data_u =[]
 
 def button1_click():
     # 初始化变量
@@ -73,7 +76,7 @@ def button1_click():
                 return
             imgs_path = path_list[current_dir_index]
             continue
-        if exists(join(imgs_path, correct_result_dir, correct_al_result_file)):
+        if exists(join(imgs_path, correct_result_dir, correct_al_result_file_u)):
             print(f"{imgs_path} exists al_result")
             current_dir_index += 1
             if current_dir_index == len(path_list):
@@ -128,14 +131,24 @@ def button1_click():
 
     global current_img_index
     global img_num
+    global al_ress_u
+    global st_ress_u
+    global valid_data
+    global valid_data_u
     global al_ress
     global st_ress
-    global valid_data
     current_img_index = -1
     img_num = len(st_tkimgs)
-    al_ress = []
-    st_ress = []
+    al_ress_u = []
+    st_ress_u = []
     valid_data = np.load(join(imgs_path, valid_result_path))
+    valid_data_u = np.load(join(imgs_path, valid_result_path_u))
+    al_ress=np.load(join(imgs_path, correct_result_dir,correct_al_result_file))
+    st_ress=np.load(join(imgs_path, correct_result_dir,correct_st_result_file))
+    print(valid_data)
+    print(valid_data_u)
+    print(al_ress)
+    print(st_ress)
     nextImg()
 
 
@@ -144,10 +157,17 @@ def nextImg():
     current_img_index += 1
     if current_img_index == img_num:
         return
-    while valid_data[current_img_index] == 0:
-        al_ress.append(-1)
-        st_ress.append(-1)
-        print(current_img_index, "invalid")
+    while True:
+        if valid_data_u[current_img_index] == valid_data[current_img_index]:
+            al_ress_u.append(al_ress[current_img_index])
+            st_ress_u.append(st_ress[current_img_index])
+            print(current_img_index, "not change")
+        elif valid_data_u[current_img_index] == 0:
+            al_ress_u.append(-1)
+            st_ress_u.append(-1)
+            print(current_img_index, "invalid")
+        else :
+            break
         current_img_index += 1
         if current_img_index == img_num:
             return
@@ -159,32 +179,32 @@ def nextImg():
 def button2_click():
     if current_img_index == img_num:
         return
-    al_ress.append(1)
-    st_ress.append(1)
+    al_ress_u.append(1)
+    st_ress_u.append(1)
     nextImg()
 
 
 def button3_click():
     if current_img_index == img_num:
         return
-    al_ress.append(1)
-    st_ress.append(0)
+    al_ress_u.append(1)
+    st_ress_u.append(0)
     nextImg()
 
 
 def button4_click():
     if current_img_index == img_num:
         return
-    al_ress.append(0)
-    st_ress.append(1)
+    al_ress_u.append(0)
+    st_ress_u.append(1)
     nextImg()
 
 
 def button5_click():
     if current_img_index == img_num:
         return
-    al_ress.append(0)
-    st_ress.append(0)
+    al_ress_u.append(0)
+    st_ress_u.append(0)
     nextImg()
 
 
@@ -195,8 +215,8 @@ def button6_click():
         return
 
     makedirs(join(imgs_path, correct_result_dir), exist_ok=True)
-    np.save(join(imgs_path, correct_result_dir, correct_al_result_file), al_ress)
-    np.save(join(imgs_path, correct_result_dir, correct_st_result_file), st_ress)
+    np.save(join(imgs_path, correct_result_dir, correct_al_result_file_u), al_ress_u)
+    np.save(join(imgs_path, correct_result_dir, correct_st_result_file_u), st_ress_u)
 
     current_dir_index += 1
 

@@ -56,9 +56,13 @@ def ananlyze_valid_result_wrong():
     call_for_imgss(path_list,ananlyze_valid_wrong_call)
 
 def ananlyze_valid_score_call(imgs_path, **kwarg):
+    if not exists(join(imgs_path, valid_result_dir, valid_label_file)):
+        return np.array([])
     return np.load(join(imgs_path, valid_score_dir, f"{kwarg["method"].__name__}.npy"))
 
 def ananlyze_valid_label_call(imgs_path, **kwarg):
+    if not exists(join(imgs_path, valid_result_dir, valid_label_file)):
+        return np.array([])
     return np.load(join(imgs_path, valid_result_dir, valid_label_file))    
 
 def ananlyze_valid_ROC(if_train_test_split=False ):
@@ -80,14 +84,15 @@ def ananlyze_valid_ROC(if_train_test_split=False ):
         makedirs(res_path,exist_ok=True)
         cv2.imwrite(join(res_path,name+"ROC.jpg"),roc_img(name, fpr, tpr, auc_score)) 
 
-def ananlyze_valid_PR(if_train_test_split=False ):
+def ananlyze_valid_PR(if_train_test_split ):
     res_path=join(ananlyze_result_dir, valid_score_dir+"_pr")
     shutil.rmtree(res_path, ignore_errors=True)
     path_list = get_imgs_paths(root)
     for met in valid_score_methods:
         ress = np.concatenate(call_for_imgss(path_list, ananlyze_valid_score_call, method=met))
         anss=np.concatenate(call_for_imgss(path_list, ananlyze_valid_label_call, method=met))
-        
+        print(len(anss))
+        print(len(ress))
         if if_train_test_split==True:
             ress_train, ress_test, anss_train, anss_test = train_test_split(ress,anss, test_size=0.2, random_state=0)
             name, ans, data=met.__name__,anss_test,ress_test
