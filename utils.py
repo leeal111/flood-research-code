@@ -18,7 +18,7 @@ def crop_img(img, crop_size=2**9):
     return cropped_image
 
 
-def get_imgs_data(
+def get_imgs_datas(
     imgs_path,
     datas_dir,
 ):
@@ -35,6 +35,24 @@ def get_imgs_data(
             data = []
         datas.append(data)
     return datas
+
+
+def get_imgs_data(
+    imgs_path,
+    data_dir,
+):
+    data_path = join(imgs_path, data_dir)
+    if not exists(data_path):
+        print("get_imgs_data error:{imgs_path} img_data not exists")
+        return None
+    if data_dir.endswith("jpg"):
+        data = cv2.imread(data_path)
+    elif data_dir.endswith("npy"):
+        data = np.load(data_path)
+    else:
+        print("get_imgs_data error:{imgs_path} wrong tailfix")
+        data = None
+    return data
 
 
 def call_for_imgss(imgs_paths, call_func, *arg, **kwarg):

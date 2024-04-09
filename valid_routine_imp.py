@@ -131,7 +131,7 @@ def _imgs_valid_call(imgs_path, data_all):
             join(imgs_path, data_all["data_dir"], f"{i:04}")
         )
         ress.append(call_methods(data, data_all["methods"]))
-    ress = np.array(ress)
+    ress = np.array(ress).T
 
     makedirs(join(imgs_path, valid_score_dir), exist_ok=True)
     for i, met in enumerate(data_all["methods"]):

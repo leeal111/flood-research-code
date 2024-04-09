@@ -58,16 +58,10 @@ def button1_click():
     imgs_path = path_list[current_dir_index]
     while 1:
         # 检查是否计算以及是否已经标注
-        if not exists(join(imgs_path, stiv_result_dir)):
-            print(f"{imgs_path} not exists stiv_result")
-            current_dir_index += 1
-            if current_dir_index == len(path_list):
-                print(f"not imgs more!")
-                return
-            imgs_path = path_list[current_dir_index]
-            continue
-        if exists(join(imgs_path, correct_result_dir, correct_al_result_file_u)):
-            print(f"{imgs_path} exists al_result")
+        if (not exists(join(imgs_path, stiv_result_dir))) or (
+            exists(join(imgs_path, correct_result_dir, correct_al_result_file_u))
+        ):
+            print(f"{imgs_path} not exists stiv_result or exists al_result")
             current_dir_index += 1
             if current_dir_index == len(path_list):
                 print(f"not imgs more!")

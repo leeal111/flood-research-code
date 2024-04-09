@@ -5,7 +5,7 @@ from os import listdir, makedirs
 
 from ananlyze_routine_imp import ananlyze_result_dir
 from stiv_compute_routine_imp import root, sum_data_dir, ifft_img_dir, stiv_result_dir
-from utils import call_for_imgss, get_imgs_data, get_imgs_paths
+from utils import call_for_imgss, get_imgs_datas, get_imgs_paths
 from valid_routine_imp import valid_result_dir, valid_label_file, valid_score_dir
 
 data_save_path = join(ananlyze_result_dir, "data")
@@ -15,7 +15,7 @@ def data_out_call(imgs_path, **kwarg):
     if not exists(join(imgs_path, stiv_result_dir)):
         print(f"{imgs_path} not exists stiv_result")
         return
-    return get_imgs_data(imgs_path, kwarg["data_path"])
+    return get_imgs_datas(imgs_path, kwarg["data_path"])
 
 
 def label_out_call(imgs_path, **kwarg):
