@@ -2,9 +2,9 @@ from os import listdir, makedirs
 import shutil
 import cv2
 import numpy as np
-from os.path import join, exists, basename, dirname, normpath
+from os.path import join, exists, basename, dirname, normpath, split
 from sklearn.metrics import average_precision_score, precision_recall_curve
-from display import pr_img
+from display import pr_img, tile_matrix_img
 from utils import call_for_imgss, get_imgs_data, get_imgs_paths, imgs_if_R2L
 from values import (
     valid_label_file,
@@ -16,6 +16,8 @@ from values import (
     correct_result_dir,
     correct_al_result_file,
     correct_st_result_file,
+    sti_res_dir,
+    xxx_csv_name,
 )
 from valid_routine_imp import sumlist_all, ifftimg_all
 
@@ -54,8 +56,11 @@ def ananlyze_correct_wrong_call(imgs_path, *arg, **kwarg):
     al_ans = np.load(join(imgs_path, correct_result_dir, correct_al_result_file))
     st_ans = np.load(join(imgs_path, correct_result_dir, correct_st_result_file))
 
+    img_dir_list_files = listdir(join(imgs_path, img_dir))
+    xxx_img_dir_list_files = listdir(join(imgs_path, xxx_img_dir))
+    xxx_img_dir_list_files = [x for x in xxx_img_dir_list_files if x != xxx_csv_name]
     for i, (img_file, site_file) in enumerate(
-        zip(listdir(join(imgs_path, img_dir)), listdir(join(imgs_path, xxx_img_dir)))
+        zip(img_dir_list_files, xxx_img_dir_list_files)
     ):
         _res_path = None
         if al_ans[i] == 1 and st_ans[i] == 0:
@@ -226,6 +231,39 @@ def ananlyze_valid_PR(root):
         makedirs(res_path, exist_ok=True)
         cv2.imwrite(
             join(res_path, name + "PR.jpg"), pr_img(name, precision, recall, f1_score)
+        )
+
+
+def ananlyze_compare_img_call(imgs_path, *arg, **kwarg):
+    if not exists(join(imgs_path, valid_result_dir, valid_label_file)):
+        print(f"{imgs_path} not exists valid_label")
+        return
+    ans = np.load(join(imgs_path, valid_result_dir, valid_label_file))
+    print(imgs_path)
+
+    other, time_dir = split(imgs_path)
+    _, loc_dir = split(other)
+    _res_path = join(ananlyze_result_dir, "compare_img", loc_dir, time_dir)
+    makedirs(_res_path, exist_ok=True)
+
+    al_path = join(imgs_path, sti_res_dir)
+    st_path = join(imgs_path, xxx_img_dir)
+    img_dir_list_files = listdir(al_path)
+    xxx_img_dir_list_files = listdir(st_path)
+    xxx_img_dir_list_files = [x for x in xxx_img_dir_list_files if x != xxx_csv_name]
+    for i, (img_file, site_file) in enumerate(
+        zip(img_dir_list_files, xxx_img_dir_list_files)
+    ):
+        if ans[i] == 0:
+            continue
+        al_img = cv2.imread(join(al_path, img_file), 0)
+        site_img = cv2.imread(join(st_path, site_file), 0)
+        al_img = cv2.resize(al_img, site_img.shape)
+        if imgs_if_R2L(imgs_path):
+            site_img = cv2.flip(site_img, 1)
+        cv2.imwrite(
+            join(_res_path, f"{len(listdir(_res_path)):04}.jpg"),
+            tile_matrix_img([[site_img, al_img]]),
         )
 
 
