@@ -10,21 +10,10 @@ def std_filter(sti):
     return (sti - np.mean(sti, axis=0)) / (np.std(sti, axis=0) + 1e-8)
 
 
-def part_sobel(image, pixel_num):
-    index_list = list(range(0, image.shape[0], pixel_num))
-    index_list_end = [x + pixel_num for x in index_list]
-
-    if index_list_end[len(index_list_end) - 1] > image.shape[0]:
-        index_list_end[len(index_list_end) - 1] = image.shape[0]
-
-    img = np.zeros_like(image)
-    for start_index, end_index in zip(index_list, index_list_end):
-        img_clr_part = cv2.Sobel(
-            image[start_index:end_index], cv2.CV_64F, 1, 1, ksize=3
-        )
-        img_clr_part[img_clr_part < 0] = 0
-        img[start_index:end_index] = img_clr_part
-    return img
+def sobel(image):
+    img_clr = cv2.Sobel(image, cv2.CV_64F, 1, 1, ksize=3)
+    img_clr[img_clr < 0] = 0
+    return img_clr
 
 
 def abs_FFT_shift(image):
@@ -135,6 +124,56 @@ def search(img_feature, res, theta, precision):
     return res, polar, sum_list
 
 
+def process_blocks(image, block_size=(8, 8), func=None):
+    # 获取图像的尺寸
+    height, width = image.shape
+
+    # 计算图像可以被分成多少个块
+    num_rows = height // block_size[0]
+    num_cols = width // block_size[1]
+
+    # 创建一个用于存储处理后的块的矩阵
+    processed_blocks = np.zeros(
+        (num_rows, num_cols, block_size[0], block_size[1]), dtype=float
+    )
+
+    # 遍历每个块并应用指定的函数
+    for i in range(num_rows):
+        for j in range(num_cols):
+            # 计算当前块的坐标
+            start_row = i * block_size[0]
+            end_row = start_row + block_size[0]
+            start_col = j * block_size[1]
+            end_col = start_col + block_size[1]
+
+            # 获取当前块并应用函数
+            block = image[start_row:end_row, start_col:end_col]
+            if func is not None:
+                processed_block = func(block)
+            else:
+                processed_block = block
+
+            # 将处理后的块存储在输出矩阵中
+            processed_blocks[i, j] = processed_block
+
+    # 将处理后的块拼接回原始图像大小
+    processed_image = np.zeros_like(image)
+    for i in range(num_rows):
+        for j in range(num_cols):
+            # 计算当前块的坐标
+            start_row = i * block_size[0]
+            end_row = start_row + block_size[0]
+            start_col = j * block_size[1]
+            end_col = start_col + block_size[1]
+
+            # 将处理后的块放回原始图像位置
+            processed_image[start_row:end_row, start_col:end_col] = processed_blocks[
+                i, j
+            ]
+
+    return processed_image
+
+
 class STIV:
     def __init__(self, if_eval=True) -> None:
         self.eval = if_eval
@@ -161,7 +200,10 @@ class STIV:
         img_std = std_filter(img.copy())
 
         # 提取倾斜特征，使得fft的特征更明显，同时也是归一化
-        img_clr = part_sobel(img_std.copy(), 1000)
+        # l = 8 * (2**0)
+        # print(l)
+        # img_clr = process_blocks(img_std.copy(), block_size=(l, l), func=sobel)
+        img_clr = sobel(img_std)
 
         # 傅里叶变换
         img_fft = abs_FFT_shift(img_clr.copy())
