@@ -48,32 +48,38 @@ def imgPow(image, powNum=None):
     return pow(image, powNum)
 
 
-def img_crop(image, rangedivR=10):
-    h, w = image.shape[:2]
-    l = min(h, w) // rangedivR
+def img_crop(image, min_distance=40, pixel_num=1000):
+    # 获取图像中心点坐标
+    center_x = image.shape[1] // 2
+    center_y = image.shape[0] // 2
 
-    # 计算图像中心坐标
-    center_x = w // 2
-    center_y = h // 2
+    # 初始化集合，包含中心点坐标
+    selected_coord = {(center_y, center_x)}
+    image_c = image.copy()
+    top_indices = np.argsort(image_c.ravel())[-pixel_num:]
+    top_coords = np.unravel_index(top_indices, image_c.shape)
+    top_coords = zip(top_coords[0][::-1], top_coords[1][::-1])
 
-    # 计算正方形的左上角和右下角坐标
-    x1 = center_x - l // 2
-    y1 = center_y - l // 2
-    x2 = center_x + l // 2
-    y2 = center_y + l // 2
+    not_coord = set()
+    for top_coord in top_coords:
+        local_min_dis = 10**10
+        for s_coord in selected_coord:
+            cur_min_dis = abs(top_coord[0] - s_coord[0]) + abs(
+                top_coord[1] - s_coord[1]
+            )
+            if local_min_dis > cur_min_dis:
+                local_min_dis = cur_min_dis
+        if local_min_dis < min_distance:
+            selected_coord.add(top_coord)
+        else:
+            not_coord.add(top_coord)
 
-    # 创建剪裁掩膜
-    mask = np.zeros((h, w), dtype=np.uint8)
-    mask[y1:y2, x1:x2] = 255
-    # mask[center_y:y2, x1:center_x] = 255
-    # mask[center_y : y2 - l // 4, center_x : x2 - l // 4] = 255
-    # mask[y1:center_y, center_x:x2] = 255
-    # mask[y1 + l // 4 : center_y, x1 + l // 4 : center_x] = 255
-
-    # 将图像与掩膜相乘，将正方形之外的像素置为 0
-    result = cv2.bitwise_and(image, image, mask=mask)
-
-    return result
+    # 将未被选中的像素置为0
+    for y in range(image.shape[0]):
+        for x in range(image.shape[1]):
+            if (y, x) in not_coord:
+                image[y, x] = 0
+    return image
 
 
 def xycrd2polarcrd(
