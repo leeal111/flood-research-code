@@ -6,6 +6,27 @@ import numpy as np
 from display import add_angle_img, line_chart_img, normalize_img
 
 
+class MethodFlag:
+    std = True
+    clr = True
+    fft = True
+    fftclr = True
+    fftpow = True
+    fftcrop = True
+    ifft = True
+    ifftclr = True
+
+    def __init__(self, std, clr, fft, fftclr, fftpow, fftcrop, ifft, ifftclr):
+        self.std = std
+        self.clr = clr
+        self.fft = fft
+        self.fftclr = fftclr
+        self.fftpow = fftpow
+        self.fftcrop = fftcrop
+        self.ifft = ifft
+        self.ifftclr = ifftclr
+
+
 def std_filter(sti):
     return (sti - np.mean(sti, axis=0)) / (np.std(sti, axis=0) + 1e-8)
 
@@ -42,13 +63,13 @@ def vertical_delete(image):
     return np.hstack([image_l_res, image_v[:, np.newaxis], image_r_res])
 
 
-def imgPow(image, powNum=None):
+def img_pow(image, powNum=None):
     maxv = np.max(image)
     powNum = np.log(255) / np.log(maxv) if powNum == None else powNum
     return pow(image, powNum)
 
 
-def img_crop(image, min_distance=40, pixel_num=1000):
+def img_crop(image, min_distance=40, min_angle=5, pixel_num=1000):
     # 获取图像中心点坐标
     center_x = image.shape[1] // 2
     center_y = image.shape[0] // 2
@@ -69,16 +90,32 @@ def img_crop(image, min_distance=40, pixel_num=1000):
             )
             if local_min_dis > cur_min_dis:
                 local_min_dis = cur_min_dis
-        if local_min_dis < min_distance:
+
+        # 角度判断
+        coords = [c for c in selected_coord if c[0] > center_y]
+        total = sum([image[y, x] for y, x in coords])
+        mean_x, mean_y = sum(x * image[y, x] for y, x in coords) / (total + 1), sum(
+            y * image[y, x] for y, x in coords
+        ) / (total + 1)
+        # image[int(mean_y), int(mean_x)] = np.max(image)
+        mean_tan = math.atan2(mean_y - center_y, mean_x - center_x) / math.pi * 180
+        local_tan = (
+            math.atan2(top_coord[0] - center_y, top_coord[1] - center_x) / math.pi * 180
+        )
+        local_tan = local_tan + 180 if local_tan < 0 else local_tan
+        local_min_angle = abs(local_tan - mean_tan)
+
+        if local_min_dis < min_distance or local_min_angle < min_angle:
             selected_coord.add(top_coord)
         else:
+            # print(local_min_angle)
             not_coord.add(top_coord)
 
     # 将未被选中的像素置为0
     for y in range(image.shape[0]):
         for x in range(image.shape[1]):
             if (y, x) in not_coord:
-                image[y, x] = 0
+                image[y, x] = 0  # np.max(image)
     return image
 
 
@@ -202,46 +239,96 @@ class STIV:
 
     def _img_process(self, img):
 
-        # 消除不同位置的竖直亮度差异。
-        img_std = std_filter(img.copy())
+        # # 消除不同位置的竖直亮度差异。
+        # img_std = std_filter(img.copy())
 
-        # 提取倾斜特征，使得fft的特征更明显，同时也是归一化
-        # l = 8 * (2**0)
-        # print(l)
-        # img_clr = process_blocks(img_std.copy(), block_size=(l, l), func=sobel)
-        img_clr = sobel(img_std)
+        # # 提取倾斜特征，使得fft的特征更明显，同时也是归一化
+        # # l = 8 * (2**0)
+        # # print(l)
+        # # img_clr = process_blocks(img_std.copy(), block_size=(l, l), func=sobel)
+        # img_clr = sobel(img_std)
 
-        # 傅里叶变换
-        img_fft = abs_FFT_shift(img_clr.copy())
-        low_freq_filter(img_fft)
+        # # 傅里叶变换
+        # img_fft = abs_FFT_shift(img_clr.copy())
+        # low_freq_filter(img_fft)
 
-        # 过滤由于partSobel产生的噪声
-        img_fft_clr = vertical_delete(img_fft)
+        # # 过滤由于partSobel产生的噪声
+        # img_fft_clr = vertical_delete(img_fft)
 
-        # 幂运算
-        img_fft_pow = imgPow(img_fft_clr, 2)
+        # # 幂运算
+        # img_fft_pow = img_pow(img_fft_clr, 2)
 
-        # 仅取中心部分
-        img_fft_crop = img_crop(img_fft_pow)
+        # # 仅取中心部分
+        # img_fft_crop = img_crop(img_fft_pow)
 
-        # 傅里叶变换并取幅值
-        img_fe = abs_FFT_shift(img_fft_crop.copy())
-        low_freq_filter(img_fe)
+        # # 傅里叶变换并取幅值
+        # img_fe = abs_FFT_shift(img_fft_crop.copy())
+        # low_freq_filter(img_fe)
 
-        # 更严格的取向判断
-        img_fe_clr = vertical_delete(img_fe)
+        # # 更严格的取向判断
+        # img_fe_clr = vertical_delete(img_fe)
+
+        # if self.eval:
+        #     self.proImgs["ORIGIN"] = img
+        #     self.proImgs["std"] = normalize_img(img_std)
+        #     self.proImgs["clr"] = normalize_img(img_clr)
+        #     self.proImgs["fft"] = normalize_img(img_fft)
+        #     self.proImgs["fftclr"] = normalize_img(img_fft_clr)
+        #     self.proImgs["fftcrop"] = normalize_img(img_fft_crop)
+        #     self.proImgs["ifft"] = normalize_img(img_fe)
+        #     self.proImgs["ifftclr"] = normalize_img(img_fe_clr)
+
+        flag = MethodFlag(
+            **{
+                "std": True,
+                "clr": True,
+                "fft": True,
+                "fftclr": True,
+                "fftpow": True,
+                "fftcrop": False,
+                "ifft": True,
+                "ifftclr": False,
+            }
+        )
 
         if self.eval:
             self.proImgs["ORIGIN"] = img
-            self.proImgs["std"] = normalize_img(img_std)
-            self.proImgs["clr"] = normalize_img(img_clr)
-            self.proImgs["fft"] = normalize_img(img_fft)
-            self.proImgs["fftclr"] = normalize_img(img_fft_clr)
-            self.proImgs["fftcrop"] = normalize_img(img_fft_crop)
-            self.proImgs["ifft"] = normalize_img(img_fe)
-            self.proImgs["ifftclr"] = normalize_img(img_fe_clr)
 
-        return img_fe_clr
+        if flag.std:
+            img = std_filter(img.copy())
+            if self.eval:
+                self.proImgs["std"] = normalize_img(img)
+        if flag.clr:
+            img = sobel(img)
+            if self.eval:
+                self.proImgs["clr"] = normalize_img(img)
+        if flag.fft:
+            img = abs_FFT_shift(img.copy())
+            low_freq_filter(img)
+            if self.eval:
+                self.proImgs["fft"] = normalize_img(img)
+        if flag.fftclr:
+            img = vertical_delete(img)
+            if self.eval:
+                self.proImgs["fftclr"] = normalize_img(img)
+        if flag.fftpow:
+            img = img_pow(img, 2)
+            if self.eval:
+                self.proImgs["fftpow"] = normalize_img(img)
+        if flag.fftcrop:
+            img = img_crop(img)
+            if self.eval:
+                self.proImgs["fftcrop"] = normalize_img(img)
+        if flag.ifft:
+            img = abs_FFT_shift(img.copy())
+            low_freq_filter(img)
+            if self.eval:
+                self.proImgs["ifft"] = normalize_img(img)
+        if flag.ifftclr:
+            img = vertical_delete(img)
+            if self.eval:
+                self.proImgs["ifftclr"] = normalize_img(img)
+        return img
 
     def sti2angle(self, img, if_R2L=False):
         self.proImgs = {}
@@ -266,6 +353,7 @@ class STIV:
 
         res, _, _ = search(fea, res, theta=2, precision=0.1)
 
+        # result = res if res <= 90 else 180 - res
         result = 90 - res if res <= 90 else res - 90
 
         if self.eval:
