@@ -1,11 +1,8 @@
 import cv2
+import matplotlib as mpl
 import numpy as np
 import math
 import matplotlib.pyplot as plt
-
-plt.rcParams["font.sans-serif"] = [
-    "SimHei",
-]  # 设置中文字体族
 
 fig_size = (8, 6)
 font_size = 20
@@ -84,13 +81,12 @@ def add_angle_img(img, angle, central_not_print_num=0):
 
 
 titles = {
-    "smoothness": "平稳程度",
-    "signal_peek_value": "总体能量值",
-    "signal_noise_radio": "峰值信噪比",
-    "nn": "神经网络",
-    "svm": "支持向量机",
+    "smoothness": "Smoothness",
+    "signal_peek_value": "Peak Signal Energy",  # or "Total Signal Energy"
+    "signal_noise_radio": "Peak Signal-to-Noise Ratio (PSNR)",  # PSNR is standard in signal processing
+    "nn": "Neural Network",
+    "svm": "Support Vector Machine (SVM)",  # SVM is standard in ML
 }
-
 
 def pr_img(name, precision, recall, f1_score):
     fig, ax = plt.subplots(figsize=fig_size)
